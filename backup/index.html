@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Miner Dash</title>
+<style>
+  :root { --orange: #ff8200; --blue: #041e42; --white: #fff; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--blue); color: var(--white);
+    font-family: "Courier New", monospace; overflow: hidden; touch-action: manipulation; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  h1 { margin: 0; font-size: clamp(18px, 4vw, 28px); color: var(--orange); letter-spacing: 2px; }
+  #wrap { position: relative; width: min(96vw, 900px); }
+  canvas { width: 100%; height: auto; display: block; border: 3px solid var(--orange); border-radius: 8px;
+    background: #0b2a55; image-rendering: pixelated; }
+  #hint { font-size: 13px; opacity: .8; }
+</style>
+</head>
+<body>
+  <h1>⛏ MINER DASH</h1>
+  <div id="wrap"><canvas id="c" width="900" height="400"></canvas></div>
+  <div id="hint">SPACE / ↑ / tap to jump (press again in the air for a double jump)</div>
+
+<script>
+(() => {
+  const canvas = document.getElementById("c");
+  const ctx = canvas.getContext("2d");
+  const W = canvas.width, H = canvas.height, GROUND = H - 70;
+
+  const ORANGE = "#ff8200", BLUE = "#041e42", WHITE = "#ffffff";
+  const store = {
+    get() { try { return +localStorage.getItem("minerDashBest") || 0; } catch { return 0; } },
+    set(v) { try { localStorage.setItem("minerDashBest", v); } catch {} }
+  };
+
+  let state, player, obstacles, gems, particles, speed, score, gemCount, best, spawnTimer, gemTimer, frame, shake;
+
+  function reset() {
+    player = { x: 110, y: GROUND, w: 34, h: 48, vy: 0, jumps: 0, onGround: true };
+    obstacles = []; gems = []; particles = [];
+    speed = 6; score = 0; gemCount = 0; spawnTimer = 60; gemTimer = 90; frame = 0; shake = 0;
+    best = store.get();
+  }
+  state = "title";
+  reset();
+
+  function jump() {
+    if (state === "title") { state = "play"; reset(); }
+    if (state === "dead") { state = "play"; reset(); return; }
+    if (player.jumps < 2) {
+      player.vy = player.jumps === 0 ? -14.5 : -12.5;
+      player.jumps++;
+      player.onGround = false;
+      burst(player.x + player.w / 2, player.y, 6, "#c9b79c");
+    }
+  }
+  addEventListener("keydown", e => {
+    if (["Space", "ArrowUp", "KeyW"].includes(e.code)) { e.preventDefault(); if (!e.repeat) jump(); }
+  });
+  canvas.addEventListener("pointerdown", e => { e.preventDefault(); jump(); });
+
+  function burst(x, y, n, color) {
+    for (let i = 0; i < n; i++)
+      particles.push({ x, y, vx: (Math.random() - .5) * 5, vy: -Math.random() * 4, life: 25 + Math.random() * 15, color });
+  }
+
+  function spawnObstacle() {
+    const tall = Math.random() < .35;
+    const kind = Math.random() < .25 ? "bat" : "rock";
+    if (kind === "bat") {
+      obstacles.push({ kind, x: W + 20, y: GROUND - 85 - Math.random() * 25, w: 36, h: 22 });
+    } else {
+      const h = tall ? 60 : 36;
+      obstacles.push({ kind, x: W + 20, y: GROUND - h, w: tall ? 34 : 44, h });
+    }
+  }
+
+  function hit(a, b) {
+    const pad = 6; // forgiving hitboxes
+    return a.x + pad < b.x + b.w && a.x + a.w - pad > b.x &&
+           a.y + pad < b.y + b.h && a.y + a.h - pad > b.y;
+  }
+
+  function update() {
+    frame++;
+    // physics
+    player.vy += 0.75;
+    player.y += player.vy;
+    if (player.y >= GROUND) { player.y = GROUND; player.vy = 0; player.jumps = 0; player.onGround = true; }
+    const box = { x: player.x, y: player.y - player.h, w: player.w, h: player.h };
+
+    // spawning (gets denser as speed rises)
+    if (--spawnTimer <= 0) {
+      spawnObstacle();
+      spawnTimer = Math.max(38, 95 - speed * 4) + Math.random() * 45;
+    }
+    if (--gemTimer <= 0) {
+      gems.push({ x: W + 20, y: GROUND - 40 - Math.random() * 110, r: 10 });
+      gemTimer = 70 + Math.random() * 90;
+    }
+
+    obstacles.forEach(o => o.x -= speed);
+    gems.forEach(g => g.x -= speed);
+    obstacles = obstacles.filter(o => o.x + o.w > -20);
+    gems = gems.filter(g => g.x + g.r > -20);
+
+    for (const o of obstacles) {
+      if (hit(box, { x: o.x, y: o.y, w: o.w, h: o.h })) { die(); return; }
+    }
+    gems = gems.filter(g => {
+      const got = Math.hypot(g.x - (box.x + box.w / 2), g.y - (box.y + box.h / 2)) < g.r + 24;
+      if (got) { gemCount++; score += 50; burst(g.x, g.y, 10, ORANGE); }
+      return !got;
+    });
+
+    score += speed * 0.05;
+    speed = Math.min(15, speed + 0.0016);
+
+    particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life--; });
+    particles = particles.filter(p => p.life > 0);
+    if (shake > 0) shake--;
+  }
+
+  function die() {
+    state = "dead"; shake = 14;
+    burst(player.x + 17, player.y - 24, 24, WHITE);
+    if (Math.floor(score) > best) { best = Math.floor(score); store.set(best); }
+  }
+
+  // ---------- drawing ----------
+  function drawBackground() {
+    const g = ctx.createLinearGradient(0, 0, 0, H);
+    g.addColorStop(0, "#071d3f"); g.addColorStop(1, "#123a73");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+    // parallax stalactites
+    ctx.fillStyle = "#06152e";
+    const off = (frame * speed * 0.3) % 120;
+    for (let x = -120; x < W + 120; x += 120) {
+      const bx = x - off;
+      ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx + 60, 0); ctx.lineTo(bx + 30, 55 + ((x / 120) % 3) * 18); ctx.fill();
+    }
+    // ground
+    ctx.fillStyle = "#3b2a1a"; ctx.fillRect(0, GROUND, W, H - GROUND);
+    ctx.fillStyle = ORANGE; ctx.fillRect(0, GROUND, W, 4);
+    ctx.fillStyle = "#53391f";
+    const go = (frame * speed) % 60;
+    for (let x = -60; x < W + 60; x += 60) ctx.fillRect(x - go, GROUND + 22, 28, 6);
+  }
+
+  function drawMiner() {
+    const x = player.x, y = player.y, t = frame;
+    const run = player.onGround ? Math.sin(t * 0.4) * 5 : 0;
+    // legs
+    ctx.fillStyle = "#1c1c1c";
+    ctx.fillRect(x + 6, y - 14, 9, 14 + (run > 0 ? -run * .5 : 0));
+    ctx.fillRect(x + 19, y - 14, 9, 14 + (run < 0 ? run * .5 : 0));
+    // body
+    ctx.fillStyle = ORANGE; ctx.fillRect(x + 3, y - 36, 28, 24);
+    ctx.fillStyle = WHITE; ctx.fillRect(x + 3, y - 26, 28, 4); // reflective stripe
+    // head
+    ctx.fillStyle = "#f1c9a0"; ctx.fillRect(x + 8, y - 48, 18, 14);
+    // hard hat + lamp
+    ctx.fillStyle = "#ffd23f"; ctx.fillRect(x + 4, y - 54, 26, 9); ctx.fillRect(x + 2, y - 46, 30, 3);
+    ctx.fillStyle = WHITE; ctx.fillRect(x + 25, y - 52, 6, 5);
+    // pickaxe
+    ctx.save(); ctx.translate(x + 30, y - 28); ctx.rotate(player.onGround ? Math.sin(t * 0.4) * 0.4 : -0.9);
+    ctx.fillStyle = "#8a5a2b"; ctx.fillRect(0, -3, 22, 4);
+    ctx.fillStyle = "#b8c2cc"; ctx.fillRect(17, -12, 4, 22);
+    ctx.restore();
+  }
+
+  function drawObstacles() {
+    for (const o of obstacles) {
+      if (o.kind === "rock") {
+        ctx.fillStyle = "#6b6f76";
+        ctx.beginPath(); ctx.moveTo(o.x, o.y + o.h); ctx.lineTo(o.x + o.w * .2, o.y + 6);
+        ctx.lineTo(o.x + o.w * .55, o.y); ctx.lineTo(o.x + o.w, o.y + o.h * .45); ctx.lineTo(o.x + o.w, o.y + o.h); ctx.fill();
+        ctx.fillStyle = "#8b9099"; ctx.fillRect(o.x + o.w * .3, o.y + 8, 8, 5);
+      } else {
+        const flap = Math.sin(frame * 0.4) * 8;
+        ctx.fillStyle = "#1a1030";
+        ctx.beginPath(); ctx.ellipse(o.x + 18, o.y + 11, 9, 8, 0, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(o.x + 12, o.y + 8); ctx.lineTo(o.x - 4, o.y + 2 + flap); ctx.lineTo(o.x + 10, o.y + 16); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(o.x + 24, o.y + 8); ctx.lineTo(o.x + 40, o.y + 2 + flap); ctx.lineTo(o.x + 26, o.y + 16); ctx.fill();
+        ctx.fillStyle = "#ff3b3b"; ctx.fillRect(o.x + 14, o.y + 8, 3, 3); ctx.fillRect(o.x + 20, o.y + 8, 3, 3);
+      }
+    }
+  }
+
+  function drawGems() {
+    for (const g of gems) {
+      const s = g.r + Math.sin(frame * 0.15 + g.x) * 1.5;
+      ctx.fillStyle = ORANGE;
+      ctx.beginPath(); ctx.moveTo(g.x, g.y - s); ctx.lineTo(g.x + s, g.y); ctx.lineTo(g.x, g.y + s); ctx.lineTo(g.x - s, g.y); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.7)";
+      ctx.beginPath(); ctx.moveTo(g.x, g.y - s); ctx.lineTo(g.x + s * .4, g.y - s * .2); ctx.lineTo(g.x - s * .4, g.y - s * .2); ctx.fill();
+    }
+  }
+
+  function drawParticles() {
+    for (const p of particles) { ctx.globalAlpha = Math.max(0, p.life / 40); ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, 4, 4); }
+    ctx.globalAlpha = 1;
+  }
+
+  function text(str, x, y, size, color = WHITE, align = "center") {
+    ctx.font = `bold ${size}px "Courier New", monospace`; ctx.textAlign = align; ctx.fillStyle = color; ctx.fillText(str, x, y);
+  }
+
+  function drawHUD() {
+    text(`SCORE ${Math.floor(score)}`, 16, 30, 20, WHITE, "left");
+    text(`💎 ${gemCount}`, 16, 56, 18, ORANGE, "left");
+    text(`BEST ${Math.max(best, Math.floor(score))}`, W - 16, 30, 20, ORANGE, "right");
+  }
+
+  function draw() {
+    ctx.save();
+    if (shake > 0) ctx.translate((Math.random() - .5) * shake, (Math.random() - .5) * shake);
+    drawBackground(); drawGems(); drawObstacles(); drawMiner(); drawParticles();
+    ctx.restore();
+    if (state === "title") {
+      ctx.fillStyle = "rgba(4,30,66,.7)"; ctx.fillRect(0, 0, W, H);
+      text("MINER DASH", W / 2, 150, 58, ORANGE);
+      text("Dodge rocks & bats. Grab the gems.", W / 2, 195, 20);
+      text("Press SPACE or tap to start", W / 2, 250, 22, WHITE);
+      text("Go Miners! ⛏", W / 2, 290, 18, ORANGE);
+    } else {
+      drawHUD();
+      if (state === "dead") {
+        ctx.fillStyle = "rgba(4,30,66,.7)"; ctx.fillRect(0, 0, W, H);
+        text("GAME OVER", W / 2, 160, 52, ORANGE);
+        text(`Score ${Math.floor(score)}   Gems ${gemCount}`, W / 2, 205, 24);
+        text(Math.floor(score) >= best ? "NEW BEST!" : `Best ${best}`, W / 2, 240, 22, ORANGE);
+        text("SPACE or tap to retry", W / 2, 285, 20);
+      }
+    }
+  }
+
+  function loop() {
+    if (state === "play") update();
+    else { frame++; particles.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += 0.2; p.life--; }); particles = particles.filter(p => p.life > 0); if (shake > 0) shake--; }
+    draw();
+    requestAnimationFrame(loop);
+  }
+  loop();
+})();
+</script>
+</body>
+</html>
