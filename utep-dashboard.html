@@ -1,184 +1,691 @@
-<title>UTEP Outcomes Dashboard</title>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>UTEP Graduate Outcomes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Public+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap">
 <style>
-/* Layout: navy masthead, credential tabs, one tall-bar card left, stacked metric cards right, sortable program table below */
+/* Editorial report layout: masthead, running headline, filter bar, figure strip,
+   scatter + program profile, area breakdown, comparison, full program table. */
 :root{
-  --bg:#f4f5f8; --surface:#ffffff; --fg:#0b1a33; --muted:#5a6479; --line:#dde1ea;
-  --blue:#041e42; --orange:#ff8200; --orange-ink:#b85c00; --track:#e6e9f1; --good:#12805c; --warn:#b3261e;
-  --head:'Archivo',system-ui,sans-serif; --body:'Public Sans',system-ui,sans-serif;
+  --paper:#fbfaf7; --ink:#15191f; --ink-2:#3b424d; --muted:#666d78; --rule:#15191f; --hair:#dcd8cf; --wash:#f1eee7; --hl:#fff1df;
+  --navy:#041e42; --orange:#ff8200;
+  --c-ba:#2a5aa0; --c-ma:#d96a00; --c-dr:#008a77; --ghost:#cfcac0;
+  --up:#1b6e45; --down:#a8322a; --above:rgba(27,110,69,.06);
+  --serif:'Source Serif 4',Georgia,serif; --sans:'Public Sans',system-ui,sans-serif;
+  color-scheme:light;
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
-  --bg:#0a1220; --surface:#111c31; --fg:#eef1f7; --muted:#9aa5bb; --line:#24324d;
-  --blue:#7fa6e6; --orange:#ff9a2e; --orange-ink:#ffb25e; --track:#1f2d47; --good:#4cc79b; --warn:#ff8a80; color-scheme:dark}}
+  --paper:#14181e; --ink:#ebe8e1; --ink-2:#c5c2bb; --muted:#9a9fa8; --rule:#ebe8e1; --hair:#2c323b; --wash:#1b2028; --hl:#2a2418;
+  --c-ba:#5b88cc; --c-ma:#d9740f; --c-dr:#2fa596; --ghost:#353b45;
+  --up:#6cc895; --down:#f08a80; --above:rgba(108,200,149,.06); color-scheme:dark}}
 :root[data-theme="dark"]{
-  --bg:#0a1220; --surface:#111c31; --fg:#eef1f7; --muted:#9aa5bb; --line:#24324d;
-  --blue:#7fa6e6; --orange:#ff9a2e; --orange-ink:#ffb25e; --track:#1f2d47; --good:#4cc79b; --warn:#ff8a80; color-scheme:dark}
-body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+  --paper:#14181e; --ink:#ebe8e1; --ink-2:#c5c2bb; --muted:#9a9fa8; --rule:#ebe8e1; --hair:#2c323b; --wash:#1b2028; --hl:#2a2418;
+  --c-ba:#5b88cc; --c-ma:#d9740f; --c-dr:#2fa596; --ghost:#353b45;
+  --up:#6cc895; --down:#f08a80; --above:rgba(108,200,149,.06); color-scheme:dark}
+
 *{box-sizing:border-box}
-.mast{background:#041e42;color:#fff;padding:18px 16px;border-bottom:4px solid #ff8200}
-.mast-in,.wrap{max-width:1180px;margin:0 auto}
-.mast h1{font:800 22px/1.15 var(--head);margin:0;letter-spacing:.01em}
-.mast p{margin:4px 0 0;color:#c4cee0;font-size:13px}
-.wrap{padding:20px 16px 48px;display:flex;flex-direction:column;gap:20px}
-.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}
-.tab{font:600 14px var(--body);background:none;border:0;border-bottom:4px solid transparent;color:var(--muted);padding:12px 20px;cursor:pointer;margin-bottom:-1px}
-.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--orange);font-weight:700}
-.tab:focus-visible,.th-btn:focus-visible,input:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
-.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px}
-.stack{display:flex;flex-direction:column;gap:20px;min-width:0}
-.card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px 22px;min-width:0}
-.card h2{font:700 21px var(--head);margin:0 0 6px}
-.big{font:800 34px/1.1 var(--head);color:var(--blue);font-variant-numeric:tabular-nums}
-.ref{font-style:italic;color:var(--muted);margin:6px 0 14px}
-.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.bar{position:relative;height:34px;background:var(--track);margin:3px 0 0}
-.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--blue)}
-.bar .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--fg)}
-.bar .range{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--orange) 45%,transparent)}
-.mk{position:relative;height:38px}
-.mk span{position:absolute;transform:translateX(-50%);text-align:center;font-size:12px;font-style:italic;color:var(--muted);top:6px;line-height:1.2;width:120px}
-.mk i{position:absolute;top:-1px;transform:translateX(-50%);border:6px solid transparent;border-bottom:8px solid var(--fg);border-top:0}
-.tall{display:flex;gap:14px;align-items:stretch;height:300px;margin-top:10px}
-.tall .axis{display:flex;flex-direction:column;justify-content:space-between;font-size:12px;color:var(--muted);text-align:right}
-.tall .col{position:relative;width:110px;background:var(--track)}
-.tall .col .fill{position:absolute;left:0;right:0;bottom:0;background:var(--blue)}
-.tall .col .tick{position:absolute;left:0;right:-8px;height:2px;background:var(--fg)}
-.tall .lab{position:absolute;left:122px;transform:translateY(50%);font-size:12px;font-style:italic;color:var(--muted);width:90px;line-height:1.2}
-.mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
-.mini .card{padding:16px 18px}
-.mini h3{font:600 13px var(--body);color:var(--muted);margin:0 0 4px}
-.mini .big{font-size:26px}
-.mini small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
-.traj{display:flex;align-items:flex-end;gap:18px;height:130px;margin-top:10px}
-.traj div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
-.traj b{display:block;width:100%;background:var(--blue)}
-.traj div:last-child b{background:var(--orange)}
-.traj em{font-style:normal;color:var(--fg);font-weight:600}
-.tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
-.tools h2{margin:0}
-input[type=search]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:9px 12px;width:min(100%,280px)}
-.tw{overflow-x:auto}
-table{border-collapse:collapse;width:100%;min-width:720px;font-variant-numeric:tabular-nums}
-th,td{text-align:right;padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
-th:first-child,td:first-child{text-align:left}
-th{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
-.th-btn{all:unset;cursor:pointer;color:var(--muted)}
-.th-btn:hover{color:var(--fg)}
-td.prog{font-weight:500;min-width:220px}
-td.prog small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--paper);color:var(--ink);font:400 15px/1.5 var(--sans);font-variant-numeric:tabular-nums}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--orange);outline-offset:2px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 16px}
+
+/* masthead */
+.mast{background:var(--navy);color:#fff;border-bottom:3px solid var(--orange)}
+.mast .wrap{display:flex;align-items:center;gap:16px;min-height:52px;flex-wrap:wrap}
+.mark{font:700 15px var(--sans);letter-spacing:.02em;display:flex;align-items:baseline;gap:10px}
+.mark b{font-weight:800;letter-spacing:.08em}
+.mark span{font-weight:400;color:#b9c4d6}
+.mast .sp{flex:1}
+.mast small{color:#b9c4d6;font-size:12.5px}
+.theme{background:none;border:1px solid rgba(255,255,255,.35);color:#fff;font-size:12.5px;padding:4px 10px;cursor:pointer;border-radius:2px}
+.theme:hover{border-color:#fff}
+
+/* lede */
+.lede{padding:36px 0 22px;display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:32px;align-items:end}
+.kicker{font:600 12.5px var(--sans);color:var(--c-ma);margin:0 0 10px}
+h1{font:600 clamp(26px,3.6vw,40px)/1.15 var(--serif);margin:0;max-width:30ch;letter-spacing:-.01em}
+h1 em{font-style:normal;box-shadow:inset 0 -.32em 0 var(--hl)}
+.dek{color:var(--ink-2);margin:14px 0 0;max-width:62ch;font-size:16px}
+.byline{font-size:12.5px;color:var(--muted);border-left:1px solid var(--hair);padding-left:16px;line-height:1.55}
+.byline b{color:var(--ink);font-weight:600}
+
+/* filter bar */
+.filters{position:sticky;top:0;z-index:20;background:var(--paper);border-top:2px solid var(--rule);border-bottom:1px solid var(--hair)}
+.filters .wrap{display:flex;flex-wrap:wrap;align-items:center;gap:10px 22px;padding-top:10px;padding-bottom:10px}
+.seg{display:flex;border:1px solid var(--hair)}
+.seg button{background:none;border:0;border-right:1px solid var(--hair);padding:6px 12px;cursor:pointer;font-size:13.5px;color:var(--ink-2)}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+.seg button:not([aria-pressed="true"]):hover{background:var(--wash)}
+.fld{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+select,input[type=search]{background:var(--paper);border:1px solid var(--hair);padding:6px 8px;font-size:13.5px;border-radius:0}
+input[type=search]{width:200px}
+input[type=range]{accent-color:var(--orange);width:110px}
+.fld output{min-width:24px;color:var(--ink);font-weight:600}
+.count{margin-left:auto;font-size:13px;color:var(--muted);display:flex;gap:12px;align-items:center}
+.linkbtn{background:none;border:0;padding:0;color:var(--ink);text-decoration:underline;text-underline-offset:3px;cursor:pointer;font-size:13px}
+.linkbtn:hover{color:var(--c-ma)}
+
+/* figure strip */
+.figs{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-bottom:1px solid var(--hair);margin-bottom:40px}
+.fig{padding:20px 20px 20px 0;border-right:1px solid var(--hair)}
+.fig+.fig{padding-left:20px}
+.fig:last-child{border-right:0}
+.fig h3{font:500 13px var(--sans);color:var(--muted);margin:0 0 6px}
+.fig .n{font:600 34px/1.05 var(--serif);letter-spacing:-.01em}
+.fig p{margin:6px 0 0;font-size:13px;color:var(--ink-2)}
+.delta{font-weight:600}
+.delta.up{color:var(--up)} .delta.dn{color:var(--down)}
+.gauge{position:relative;height:6px;background:var(--wash);margin-top:12px;border:1px solid var(--hair)}
+.gauge i{position:absolute;inset:-1px auto -1px 0;background:var(--ink-2)}
+.gauge u{position:absolute;top:-5px;bottom:-5px;width:2px;background:var(--orange)}
+.gauge s{position:absolute;top:-1px;bottom:-1px;background:color-mix(in srgb,var(--orange) 35%,transparent)}
+
+/* sections */
+.sec{border-top:2px solid var(--rule);padding-top:12px;margin-bottom:44px}
+.sec-h{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 16px;margin-bottom:6px}
+h2{font:600 22px/1.2 var(--serif);margin:0}
+.sec-h .aside{font-size:13px;color:var(--muted)}
+.sec-h .tools{margin-left:auto;display:flex;gap:10px;align-items:center}
+.chip{background:none;border:1px solid var(--hair);padding:4px 10px;font-size:12.5px;cursor:pointer;color:var(--ink-2)}
+.chip:hover{border-color:var(--ink)}
+.chip[aria-pressed="true"]{border-color:var(--ink);background:var(--ink);color:var(--paper)}
+
+.two{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:36px}
+
+/* scatter */
+.plot{position:relative}
+.plot svg{display:block;width:100%;height:auto;overflow:visible}
+.plot text{font:12px var(--sans);fill:var(--muted)}
+.plot .grid line{stroke:var(--hair)}
+.plot .diag{stroke:var(--ink);stroke-width:1.25;stroke-dasharray:5 4}
+.plot .zone{fill:var(--above)}
+.plot .zl{font:italic 13px var(--serif);fill:var(--ink-2)}
+.dot{cursor:pointer;transition:opacity .15s}
+.dot circle.v{stroke:var(--paper);stroke-width:2}
+.dot.off circle.v{fill:var(--ghost)}
+.dot.dim{opacity:.18}
+.dot.sel circle.v{stroke:var(--ink);stroke-width:2.5}
+.dot.pin circle.v{stroke:var(--orange);stroke-width:2.5}
+.dot circle.hit{fill:transparent}
+.plot .lbl{font:600 12px var(--sans);fill:var(--ink);paint-order:stroke;stroke:var(--paper);stroke-width:4px;pointer-events:none}
+.legend{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--ink-2);margin:4px 0 10px}
+.legend button{background:none;border:0;padding:0;display:flex;align-items:center;gap:6px;cursor:pointer;color:inherit;font-size:12.5px}
+.legend button[aria-pressed="false"]{opacity:.4;text-decoration:line-through}
+.sw{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.legend .sz{display:flex;align-items:center;gap:6px;color:var(--muted)}
+.legend .sz i{display:inline-block;border:1px solid var(--muted);border-radius:50%}
+.tip{position:absolute;pointer-events:none;background:var(--ink);color:var(--paper);padding:8px 10px;font-size:12.5px;line-height:1.4;max-width:250px;opacity:0;transform:translateY(4px);transition:opacity .12s,transform .12s;z-index:5}
+.tip.on{opacity:1;transform:none}
+.tip b{display:block;font-weight:600;margin-bottom:2px}
+.tip span{opacity:.75}
+.hint{font-size:12px;color:var(--muted);margin-top:6px}
+kbd{font:600 11px var(--sans);border:1px solid var(--hair);border-bottom-width:2px;padding:0 4px;color:var(--ink-2)}
+
+/* profile */
+.profile{border-left:1px solid var(--hair);padding-left:28px;min-width:0}
+.pnav{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:12px}
+.pnav button{background:none;border:1px solid var(--hair);width:28px;height:28px;cursor:pointer;color:var(--ink);line-height:1}
+.pnav button:hover:not(:disabled){border-color:var(--ink)}
+.pnav button:disabled{opacity:.35;cursor:default}
+.pnav .sp{flex:1}
+.ptag{display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--muted);margin-bottom:4px}
+.profile h3{font:600 21px/1.25 var(--serif);margin:0 0 14px}
+.pbig{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.pbig .n{font:600 40px/1 var(--serif);letter-spacing:-.01em}
+.pbig .delta{font-size:14px}
+.psub{font-size:13px;color:var(--muted);margin:4px 0 16px}
+.traj svg{display:block;width:100%;height:auto;overflow:visible}
+.traj text{font:12px var(--sans);fill:var(--muted)}
+.traj .v{fill:var(--ink);font-weight:600}
+.tnote{font-size:12px;color:var(--muted);margin:2px 0 0;display:flex;align-items:center;gap:8px}
+.tnote i{width:18px;border-top:2px dashed var(--orange)}
+.facts{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--hair);margin:14px 0 0}
+.facts div{padding:10px 0;border-bottom:1px solid var(--hair)}
+.facts div:nth-child(odd){padding-right:12px;border-right:1px solid var(--hair)}
+.facts div:nth-child(even){padding-left:12px}
+.facts dt{font-size:12px;color:var(--muted)}
+.facts dd{margin:2px 0 0;font-weight:600;font-size:16px}
+.facts dd small{font-weight:400;color:var(--muted);font-size:12px}
+.pact{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.btn{background:var(--ink);color:var(--paper);border:1px solid var(--ink);padding:7px 14px;cursor:pointer;font-size:13px;font-weight:600}
+.btn.ghost{background:none;color:var(--ink)}
+.btn:hover{opacity:.88}
+.btn:disabled{opacity:.4;cursor:default}
+.empty{color:var(--muted);font-style:italic;font-family:var(--serif);font-size:16px;padding:30px 0}
+
+/* areas */
+.areas{display:grid;grid-template-columns:minmax(0,1fr);margin-top:8px}
+.arow{display:grid;grid-template-columns:200px 56px minmax(0,1fr) 130px;gap:14px;align-items:center;padding:9px 6px;border-bottom:1px solid var(--hair);background:none;border-left:0;border-right:0;border-top:0;text-align:left;cursor:pointer;width:100%}
+.arow:hover{background:var(--wash)}
+.arow[aria-pressed="true"]{background:var(--hl)}
+.arow .an{font-weight:600;font-size:14px}
+.arow .ac{font-size:12.5px;color:var(--muted)}
+.arow .ab{position:relative;height:14px}
+.arow .ab i{position:absolute;top:0;bottom:0;left:0;background:var(--ink-2);border-radius:0 3px 3px 0}
+.arow .ab u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--orange)}
+.arow .ab em{position:absolute;top:-1px;font-style:normal;font-size:12px;font-weight:600;padding-left:6px;white-space:nowrap}
+.arow .aw{font-size:12.5px;color:var(--ink-2)}
+.arow .aw b{display:inline-block;height:6px;background:var(--up);vertical-align:1px;margin-right:6px}
+.akey{display:flex;gap:18px;font-size:12px;color:var(--muted);margin-top:10px;flex-wrap:wrap}
+.akey span::before{content:"";display:inline-block;width:14px;height:8px;background:var(--ink-2);margin-right:6px}
+.akey span.o::before{width:2px;height:12px;background:var(--orange);vertical-align:-2px}
+
+/* compare */
+.cmp{overflow-x:auto}
+.cmp table{min-width:560px}
+.cmp th{text-align:left;vertical-align:bottom;font:600 15px/1.3 var(--serif);text-transform:none;letter-spacing:0;color:var(--ink);padding:8px 12px 10px}
+.cmp th small{display:block;font:400 12px var(--sans);color:var(--muted)}
+.cmp th .x{float:right;background:none;border:0;color:var(--muted);cursor:pointer;font-size:16px;padding:0 0 0 8px}
+.cmp th .x:hover{color:var(--down)}
+.cmp td{text-align:left;padding:8px 12px}
+.cmp td.best{font-weight:700}
+.cmp td.best::after{content:" ●";color:var(--up);font-size:10px;vertical-align:2px}
+.cmp tbody th{font:500 13px var(--sans);color:var(--muted);width:180px}
+
+/* table */
+.tw{overflow-x:auto;margin-top:8px}
+table{border-collapse:collapse;width:100%;min-width:780px}
+thead th{font:600 12px var(--sans);color:var(--muted);text-align:right;padding:8px 10px;border-bottom:1px solid var(--rule);white-space:nowrap;vertical-align:bottom}
+thead th:first-child{text-align:left}
+.sort{all:unset;cursor:pointer}
+.sort:hover{color:var(--ink)}
+.sort:focus-visible{outline:2px solid var(--orange)}
+.sort .ar{display:inline-block;width:10px;color:var(--ink)}
+tbody td{padding:9px 10px;border-bottom:1px solid var(--hair);text-align:right;vertical-align:middle}
+tbody td:first-child{text-align:left}
+tbody tr{cursor:pointer}
+tbody tr:hover{background:var(--wash)}
+tbody tr.sel{background:var(--hl)}
+tbody tr.sel td:first-child{box-shadow:inset 3px 0 0 var(--orange)}
+td.prog{min-width:240px}
+td.prog .pn{font-weight:500}
+td.prog small{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:12px}
 .cell{display:flex;align-items:center;gap:10px;justify-content:flex-end}
-.mb{position:relative;width:90px;height:10px;background:var(--track);flex:none}
-.mb i{position:absolute;inset:0 auto 0 0;background:var(--blue)}
-.mb u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--orange)}
-.pill{font:600 12px var(--body);padding:2px 8px;border-radius:99px;white-space:nowrap}
-.pill.up{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
-.pill.dn{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.mb{position:relative;width:96px;height:8px;background:var(--wash);flex:none}
+.mb i{position:absolute;top:0;bottom:0;left:0;background:var(--ink-2);border-radius:0 2px 2px 0}
+.mb u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--orange)}
+.gap{font-weight:600;white-space:nowrap}
+.gap.up{color:var(--up)} .gap.dn{color:var(--down)}
+.gap::before{font-size:10px;margin-right:4px;vertical-align:1px}
+.gap.up::before{content:"▲"} .gap.dn::before{content:"▼"}
 .na{color:var(--muted)}
-.key{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--muted);margin-top:12px}
-.key span::before{content:"";display:inline-block;width:12px;height:10px;margin-right:6px;vertical-align:-1px;background:var(--blue)}
-.key span.o::before{width:2px;height:14px;background:var(--orange);vertical-align:-3px}
-.note{color:var(--muted);font-size:12px;max-width:80ch}
-@media (max-width:860px){.grid{grid-template-columns:1fr}.mini{grid-template-columns:1fr 1fr}}
-@media (max-width:480px){.mini{grid-template-columns:1fr}.tab{padding:10px 12px}.big{font-size:30px}.tall .lab{width:70px}}
+mark{background:var(--hl);color:inherit;padding:0 1px}
+.tkey{display:flex;flex-wrap:wrap;gap:18px;font-size:12px;color:var(--muted);margin-top:12px}
+.tkey span::before{content:"";display:inline-block;width:14px;height:8px;margin-right:6px;background:var(--ink-2)}
+.tkey span.o::before{width:2px;height:12px;background:var(--orange);vertical-align:-2px}
+
+footer{border-top:1px solid var(--hair);padding:18px 0 48px;font-size:12.5px;color:var(--muted)}
+footer p{max-width:80ch;margin:0 0 8px}
+
+@media (max-width:980px){
+  .two{grid-template-columns:1fr}
+  .profile{border-left:0;padding-left:0;border-top:1px solid var(--hair);padding-top:20px}
+  .lede{grid-template-columns:1fr}
+  .byline{border-left:0;padding-left:0}
+}
+@media (max-width:760px){
+  .figs{grid-template-columns:1fr 1fr}
+  .fig:nth-child(2){border-right:0}
+  .fig:nth-child(3){padding-left:0}
+  .fig:nth-child(-n+2){border-bottom:1px solid var(--hair)}
+  .arow{grid-template-columns:minmax(0,1fr) 44px;row-gap:6px}
+  .arow .ab{grid-column:1/-1}
+  .arow .aw{grid-column:1/-1}
+  .count{margin-left:0}
+  input[type=search]{width:100%}
+  .fld.q{flex:1 1 100%}
+  .filters{position:static}
+}
+@media (max-width:420px){
+  .fig .n{font-size:28px}
+  .seg button{padding:6px 9px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
 </style>
-<header class="mast"><div class="mast-in">
-  <h1>The University of Texas at El Paso</h1>
-  <p>Graduate outcomes by program · U.S. Department of Education College Scorecard field-of-study data</p>
+</head>
+<body>
+<header class="mast"><div class="wrap">
+  <div class="mark"><b>UTEP</b><span>Graduate Outcomes</span></div>
+  <div class="sp"></div>
+  <small>College Scorecard, field-of-study data</small>
+  <button class="theme" id="theme" type="button">Dark</button>
 </div></header>
-<main class="wrap">
-  <div class="tabs" role="tablist" id="tabs"></div>
-  <div class="grid">
-    <section class="card" aria-labelledby="h-above">
-      <h2 id="h-above">Programs above national pay</h2>
-      <div class="big" id="above-big"></div>
-      <p class="ref" id="above-ref"></p>
-      <div class="tall" id="tall"></div>
-    </section>
-    <div class="stack">
-      <section class="card">
-        <h2>Median Earnings</h2>
-        <div class="big" id="earn-big"></div>
-        <p class="ref" id="earn-ref"></p>
-        <div class="ends"><span>$0</span><span>$100,000+</span></div>
-        <div class="bar" id="earn-bar"></div><div class="mk" id="earn-mk"></div>
-      </section>
-      <section class="card">
-        <h2>Median Federal Debt</h2>
-        <div class="big" id="debt-big"></div>
-        <p class="ref" id="debt-ref"></p>
-        <div class="ends"><span>$0</span><span>$40,000</span></div>
-        <div class="bar" id="debt-bar"></div><div class="mk" id="debt-mk"></div>
-      </section>
+
+<div class="wrap">
+  <section class="lede">
+    <div>
+      <p class="kicker" id="kicker">All credentials</p>
+      <h1 id="headline"></h1>
+      <p class="dek" id="dek"></p>
     </div>
+    <div class="byline">
+      <b>What this covers</b><br>
+      Earnings and federal debt for UTEP graduates, program by program, set against the national median for the same field of study.
+    </div>
+  </section>
+</div>
+
+<nav class="filters" aria-label="Filters"><div class="wrap">
+  <div class="seg" id="cred" role="group" aria-label="Credential"></div>
+  <label class="fld">Area <select id="area"></select></label>
+  <label class="fld">Min. graduates <input type="range" id="min" min="0" max="150" step="5" value="0"><output id="minv">0</output></label>
+  <label class="fld q"><input type="search" id="q" placeholder="Find a program  ( / )" aria-label="Find a program"></label>
+  <div class="count"><span id="count"></span><button class="linkbtn" id="reset" type="button">Reset</button></div>
+</div></nav>
+
+<main class="wrap">
+  <div class="figs" id="figs">
+    <div class="fig"><h3>Median pay, 4 years out</h3><div class="n" id="f-earn"></div><p id="f-earn-p"></p><div class="gauge" id="f-earn-g"></div></div>
+    <div class="fig"><h3>Programs beating national pay</h3><div class="n" id="f-up"></div><p id="f-up-p"></p><div class="gauge" id="f-up-g"></div></div>
+    <div class="fig"><h3>Median federal debt</h3><div class="n" id="f-debt"></div><p id="f-debt-p"></p><div class="gauge" id="f-debt-g"></div></div>
+    <div class="fig"><h3>Graduates counted</h3><div class="n" id="f-grads"></div><p id="f-grads-p"></p></div>
   </div>
-  <div class="mini">
-    <section class="card"><h3>Graduates counted</h3><div class="big" id="m-grads"></div><small id="m-grads-s"></small></section>
-    <section class="card"><h3>Typical monthly payment</h3><div class="big" id="m-pay"></div><small>10-year standard federal plan</small></section>
-    <section class="card"><h3>Earnings over time</h3><div class="traj" id="traj"></div></section>
-  </div>
-  <section class="card">
-    <div class="tools"><h2 id="h-table">All programs</h2>
-      <input type="search" id="q" placeholder="Search programs" aria-label="Search programs"></div>
+
+  <section class="sec" aria-labelledby="h-plot">
+    <div class="sec-h"><h2 id="h-plot">Who out-earns their field</h2>
+      <span class="aside">Each dot is a program. Above the dashed line, UTEP grads earn more than the national median for that field.</span></div>
+    <div class="two">
+      <div>
+        <div class="legend" id="legend"></div>
+        <div class="plot" id="plot"><div class="tip" id="tip" role="status"></div></div>
+        <p class="hint">Click a dot or a table row to open its profile. <kbd>←</kbd> <kbd>→</kbd> step through programs, <kbd>/</kbd> search.</p>
+      </div>
+      <aside class="profile" id="profile" aria-live="polite"></aside>
+    </div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-area">
+    <div class="sec-h"><h2 id="h-area">By academic area</h2>
+      <span class="aside">Click an area to filter everything on the page.</span>
+      <div class="tools"><span class="aside">Sort</span>
+        <button class="chip" data-as="earn" aria-pressed="true">Pay</button>
+        <button class="chip" data-as="share" aria-pressed="false">Share above</button>
+        <button class="chip" data-as="n" aria-pressed="false">Graduates</button></div></div>
+    <div class="areas" id="areas"></div>
+    <div class="akey"><span>Median pay, 4 years out</span><span class="o">National median, same fields</span></div>
+  </section>
+
+  <section class="sec" id="cmp-sec" aria-labelledby="h-cmp" hidden>
+    <div class="sec-h"><h2 id="h-cmp">Side by side</h2><span class="aside">Up to three programs. Best value in each row is marked.</span>
+      <div class="tools"><button class="linkbtn" id="cmp-clear" type="button">Clear all</button></div></div>
+    <div class="cmp" id="cmp"></div>
+  </section>
+
+  <section class="sec" aria-labelledby="h-table">
+    <div class="sec-h"><h2 id="h-table">Every program</h2><span class="aside" id="t-aside"></span>
+      <div class="tools"><button class="chip" id="csv" type="button">Download CSV</button></div></div>
     <div class="tw"><table aria-labelledby="h-table"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
-    <div class="key"><span>UTEP median earnings, 4 years after</span><span class="o">National median, same field</span></div>
-    <p class="note" id="note"></p>
+    <div class="tkey"><span>UTEP median pay, 4 years out</span><span class="o">National median, same field</span></div>
   </section>
 </main>
+
+<footer><div class="wrap">
+  <p>Source: U.S. Department of Education, College Scorecard, field-of-study file. The Scorecard suppresses figures for programs with too few graduates; those are shown as —.</p>
+  <p>Group figures are medians of program medians, weighted by graduates. Earnings are in nominal dollars and count graduates who are working and not enrolled. Monthly payment assumes the 10-year standard federal plan. Academic areas are grouped here for browsing and may not match UTEP's college structure exactly.</p>
+</div></footer>
+
 <script>
-var D=[["Natural Resources Conservation and Research","Bachelor's Degree",14,null,null,31207,null,null,55012],["Communication and Media Studies","Bachelor's Degree",22,null,null,23766,58451,null,56359],["Radio, Television, and Digital Communication","Bachelor's Degree",68,20750,220,21182,36373,41552,50497],["Public Relations, Advertising, and Applied Communication","Bachelor's Degree",85,20200,214,33280,49558,45106,63560],["Computer and Information Sciences, General","Bachelor's Degree",165,19869,211,73311,103286,101825,92374],["Curriculum and Instruction","Master's Degree",72,38965,443,59146,62807,61028,63399],["Educational Administration and Supervision","Master's Degree",41,32424,369,58148,67557,67045,71685],["Special Education and Teaching","Master's Degree",18,null,null,65786,null,58824,64397],["Student Counseling and Personnel Services","Master's Degree",14,null,null,null,60800,59803,60111],["Teacher Education and Professional Development, Specific Subject Areas","Master's Degree",4,null,null,62035,null,57848,63707],["Civil Engineering","Bachelor's Degree",73,16341,173,60287,75882,76943,86517],["Computer Engineering","Master's Degree",36,26718,304,102946,121882,null,136736],["Electrical, Electronics, and Communications Engineering","Bachelor's Degree",66,17823,189,74285,94122,99630,100647],["Mechanical Engineering","Bachelor's Degree",199,16378,174,62393,88393,91486,92135],["Mechanical Engineering","Master's Degree",44,null,null,93773,107441,96545,115974],["Metallurgical Engineering","Bachelor's Degree",22,20490,217,53478,89131,73613,92722],["Systems Engineering","Master's Degree",52,null,null,93203,113173,77904,144565],["Industrial Engineering","Bachelor's Degree",61,16104,171,45467,82391,80955,98442],["Linguistic, Comparative, and Related Language Studies and Services","Bachelor's Degree",20,16502,175,26475,39907,24899,49984],["Romance Languages, Literatures, and Linguistics","Bachelor's Degree",13,23778,252,30291,47152,53955,55000],["English Language and Literature, General","Bachelor's Degree",61,21750,231,29550,45184,47373,48590],["Rhetoric and Composition/Writing Studies","Master's Degree",33,37705,429,63112,59922,56065,55035],["Biology, General","Bachelor's Degree",297,17895,190,22167,49396,51785,57214],["Biochemistry, Biophysics and Molecular Biology","Bachelor's Degree",39,16877,179,19546,51356,59236,65466],["Microbiological Sciences and Immunology","Bachelor's Degree",28,18938,201,22069,53992,63674,62582],["Mathematics","Bachelor's Degree",39,18125,192,42424,57392,57385,69562],["Multi/Interdisciplinary Studies, Other","Bachelor's Degree",2,20850,221,49351,56486,54209,55693],["Multi/Interdisciplinary Studies, Other","Master's Degree",42,null,null,60687,77302,73616,75122],["Sports, Kinesiology, and Physical Education/Fitness","Bachelor's Degree",170,19875,211,23010,51063,57958,54562],["Geological and Earth Sciences/Geosciences","Bachelor's Degree",12,null,null,null,52098,null,60190],["Geological and Earth Sciences/Geosciences","Master's Degree",5,null,null,null,99705,null,79463],["Psychology, General","Bachelor's Degree",282,17875,190,27627,42190,43930,50706],["Criminal Justice and Corrections","Bachelor's Degree",283,18750,199,33304,47681,49048,55378],["Security Science and Technology","Bachelor's Degree",28,24060,255,23495,42459,63300,57805],["Public Administration","Master's Degree",14,null,null,null,72517,68589,81408],["Social Work","Bachelor's Degree",39,16236,172,37865,53995,48913,51790],["Social Work","Master's Degree",36,null,null,null,62434,63976,65123],["Anthropology","Bachelor's Degree",8,null,null,null,null,23099,46676],["International Relations and National Security Studies","Master's Degree",32,null,null,79569,null,null,95627],["Political Science and Government","Bachelor's Degree",67,20663,219,26182,54069,45528,63293],["Sociology","Bachelor's Degree",18,22328,237,29066,35325,47880,52657],["Fine and Studio Arts","Bachelor's Degree",64,18500,196,19506,36854,34170,41367],["Music","Bachelor's Degree",29,14894,158,56062,60172,null,42892],["Arts, Entertainment, and Media Management","Bachelor's Degree",18,24000,254,16023,null,33062,48240],["Communication Disorders Sciences and Services","Master's Degree",25,null,null,null,75776,78910,67030],["Clinical/Medical Laboratory Science/Research and Allied Professions","Bachelor's Degree",24,21000,223,54659,66491,60471,75975],["Mental and Social Health Services and Allied Professions","Master's Degree",37,48143,548,49428,57668,null,59571],["Public Health","Bachelor's Degree",32,23000,244,31844,44665,39473,58808],["Rehabilitation and Therapeutic Professions","Bachelor's Degree",98,null,null,28195,null,null,55792],["Rehabilitation and Therapeutic Professions","Master's Degree",23,33701,383,59225,69580,65412,71416],["Rehabilitation and Therapeutic Professions","Doctoral Degree",null,44877,510,76331,87651,86370,82893],["Health Professions Education, Ethics, and Humanities","Master's Degree",24,38201,435,95799,98664,89521,100487],["Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing","Bachelor's Degree",376,18700,198,72429,89077,84537,88910],["Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing","Master's Degree",100,41000,466,104997,121262,128408,120193],["Business/Commerce, General","Bachelor's Degree",16,null,null,null,48065,51833,68407],["Business Administration, Management and Operations","Bachelor's Degree",142,16656,177,37140,51506,46950,68257],["Business Administration, Management and Operations","Master's Degree",97,31722,361,66350,82356,88771,103485],["Accounting and Related Services","Bachelor's Degree",156,17500,186,37562,57389,57556,76194],["Accounting and Related Services","Master's Degree",51,16634,189,61218,81639,78356,95833],["Business/Managerial Economics","Bachelor's Degree",20,null,null,null,null,57581,77981],["Finance and Financial Management Services","Bachelor's Degree",122,15898,169,40994,59668,52663,83343],["International Business","Bachelor's Degree",18,null,null,15202,null,null,73201],["Management Information Systems and Services","Bachelor's Degree",13,18951,201,41014,62136,55242,83290],["Marketing","Bachelor's Degree",97,15000,159,31236,49068,52324,69303],["Construction Management","Master's Degree",60,22543,256,70155,100391,null,112166],["History","Bachelor's Degree",33,22500,239,30230,50510,46573,50680]].map(function(r){return{p:r[0],c:r[1],n:r[2],debt:r[3],pay:r[4],e1:r[5],e4:r[6],e5:r[7],nat:r[8]}});
-var TABS=[["All programs",function(){return true}],["Bachelor's",function(r){return r.c==="Bachelor's Degree"}],["Master's",function(r){return r.c==="Master's Degree"}],["Doctoral & Professional",function(r){return /Doctoral|Professional Degree/.test(r.c)}]];
-var cur=0,sortKey="n",sortDir=-1,query="";
-var $=function(i){return document.getElementById(i)};
+var D=[["Natural Resources Conservation and Research","Bachelor's Degree",14,null,null,31207,null,null,55012],["Communication and Media Studies","Bachelor's Degree",22,null,null,23766,58451,null,56359],["Radio, Television, and Digital Communication","Bachelor's Degree",68,20750,220,21182,36373,41552,50497],["Public Relations, Advertising, and Applied Communication","Bachelor's Degree",85,20200,214,33280,49558,45106,63560],["Computer and Information Sciences, General","Bachelor's Degree",165,19869,211,73311,103286,101825,92374],["Curriculum and Instruction","Master's Degree",72,38965,443,59146,62807,61028,63399],["Educational Administration and Supervision","Master's Degree",41,32424,369,58148,67557,67045,71685],["Special Education and Teaching","Master's Degree",18,null,null,65786,null,58824,64397],["Student Counseling and Personnel Services","Master's Degree",14,null,null,null,60800,59803,60111],["Teacher Education and Professional Development, Specific Subject Areas","Master's Degree",4,null,null,62035,null,57848,63707],["Civil Engineering","Bachelor's Degree",73,16341,173,60287,75882,76943,86517],["Computer Engineering","Master's Degree",36,26718,304,102946,121882,null,136736],["Electrical, Electronics, and Communications Engineering","Bachelor's Degree",66,17823,189,74285,94122,99630,100647],["Mechanical Engineering","Bachelor's Degree",199,16378,174,62393,88393,91486,92135],["Mechanical Engineering","Master's Degree",44,null,null,93773,107441,96545,115974],["Metallurgical Engineering","Bachelor's Degree",22,20490,217,53478,89131,73613,92722],["Systems Engineering","Master's Degree",52,null,null,93203,113173,77904,144565],["Industrial Engineering","Bachelor's Degree",61,16104,171,45467,82391,80955,98442],["Linguistic, Comparative, and Related Language Studies and Services","Bachelor's Degree",20,16502,175,26475,39907,24899,49984],["Romance Languages, Literatures, and Linguistics","Bachelor's Degree",13,23778,252,30291,47152,53955,55000],["English Language and Literature, General","Bachelor's Degree",61,21750,231,29550,45184,47373,48590],["Rhetoric and Composition/Writing Studies","Master's Degree",33,37705,429,63112,59922,56065,55035],["Biology, General","Bachelor's Degree",297,17895,190,22167,49396,51785,57214],["Biochemistry, Biophysics and Molecular Biology","Bachelor's Degree",39,16877,179,19546,51356,59236,65466],["Microbiological Sciences and Immunology","Bachelor's Degree",28,18938,201,22069,53992,63674,62582],["Mathematics","Bachelor's Degree",39,18125,192,42424,57392,57385,69562],["Multi/Interdisciplinary Studies, Other","Bachelor's Degree",2,20850,221,49351,56486,54209,55693],["Multi/Interdisciplinary Studies, Other","Master's Degree",42,null,null,60687,77302,73616,75122],["Sports, Kinesiology, and Physical Education/Fitness","Bachelor's Degree",170,19875,211,23010,51063,57958,54562],["Geological and Earth Sciences/Geosciences","Bachelor's Degree",12,null,null,null,52098,null,60190],["Geological and Earth Sciences/Geosciences","Master's Degree",5,null,null,null,99705,null,79463],["Psychology, General","Bachelor's Degree",282,17875,190,27627,42190,43930,50706],["Criminal Justice and Corrections","Bachelor's Degree",283,18750,199,33304,47681,49048,55378],["Security Science and Technology","Bachelor's Degree",28,24060,255,23495,42459,63300,57805],["Public Administration","Master's Degree",14,null,null,null,72517,68589,81408],["Social Work","Bachelor's Degree",39,16236,172,37865,53995,48913,51790],["Social Work","Master's Degree",36,null,null,null,62434,63976,65123],["Anthropology","Bachelor's Degree",8,null,null,null,null,23099,46676],["International Relations and National Security Studies","Master's Degree",32,null,null,79569,null,null,95627],["Political Science and Government","Bachelor's Degree",67,20663,219,26182,54069,45528,63293],["Sociology","Bachelor's Degree",18,22328,237,29066,35325,47880,52657],["Fine and Studio Arts","Bachelor's Degree",64,18500,196,19506,36854,34170,41367],["Music","Bachelor's Degree",29,14894,158,56062,60172,null,42892],["Arts, Entertainment, and Media Management","Bachelor's Degree",18,24000,254,16023,null,33062,48240],["Communication Disorders Sciences and Services","Master's Degree",25,null,null,null,75776,78910,67030],["Clinical/Medical Laboratory Science/Research and Allied Professions","Bachelor's Degree",24,21000,223,54659,66491,60471,75975],["Mental and Social Health Services and Allied Professions","Master's Degree",37,48143,548,49428,57668,null,59571],["Public Health","Bachelor's Degree",32,23000,244,31844,44665,39473,58808],["Rehabilitation and Therapeutic Professions","Bachelor's Degree",98,null,null,28195,null,null,55792],["Rehabilitation and Therapeutic Professions","Master's Degree",23,33701,383,59225,69580,65412,71416],["Rehabilitation and Therapeutic Professions","Doctoral Degree",null,44877,510,76331,87651,86370,82893],["Health Professions Education, Ethics, and Humanities","Master's Degree",24,38201,435,95799,98664,89521,100487],["Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing","Bachelor's Degree",376,18700,198,72429,89077,84537,88910],["Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing","Master's Degree",100,41000,466,104997,121262,128408,120193],["Business/Commerce, General","Bachelor's Degree",16,null,null,null,48065,51833,68407],["Business Administration, Management and Operations","Bachelor's Degree",142,16656,177,37140,51506,46950,68257],["Business Administration, Management and Operations","Master's Degree",97,31722,361,66350,82356,88771,103485],["Accounting and Related Services","Bachelor's Degree",156,17500,186,37562,57389,57556,76194],["Accounting and Related Services","Master's Degree",51,16634,189,61218,81639,78356,95833],["Business/Managerial Economics","Bachelor's Degree",20,null,null,null,null,57581,77981],["Finance and Financial Management Services","Bachelor's Degree",122,15898,169,40994,59668,52663,83343],["International Business","Bachelor's Degree",18,null,null,15202,null,null,73201],["Management Information Systems and Services","Bachelor's Degree",13,18951,201,41014,62136,55242,83290],["Marketing","Bachelor's Degree",97,15000,159,31236,49068,52324,69303],["Construction Management","Master's Degree",60,22543,256,70155,100391,null,112166],["History","Bachelor's Degree",33,22500,239,30230,50510,46573,50680]];
+var ROWS=D.map(function(r,i){return{id:i,p:r[0],c:r[1],n:r[2],debt:r[3],pay:r[4],e1:r[5],e4:r[6],e5:r[7],nat:r[8]}});
+
+var AREAS=[
+  ["Engineering & Computing",/Engineering|Computer and Information|Construction Management/],
+  ["Business",/Business|Accounting|Finance|Marketing|Management Information/],
+  ["Health Sciences & Nursing",/Nursing|Health|Rehabilitation|Clinical|Communication Disorders|Kinesiology|Social Work/],
+  ["Science & Math",/Biology|Biochemistry|Microbiolog|Mathematics|Geological|Natural Resources/],
+  ["Education",/Curriculum|Educational|Special Education|Student Counseling|Teacher Education/],
+  ["Arts & Humanities",/Fine and Studio|Music|Arts, Entertainment|English|Rhetoric|Linguistic|Romance|History|Communication and Media|Radio, Television|Public Relations/],
+  ["Social & Behavioral Sciences",/./]
+];
+ROWS.forEach(function(r){for(var i=0;i<AREAS.length;i++)if(AREAS[i][1].test(r.p)){r.a=AREAS[i][0];break}});
+
+var CREDS=[
+  {k:"all",label:"All",test:function(){return true}},
+  {k:"ba",label:"Bachelor's",test:function(r){return r.c==="Bachelor's Degree"}},
+  {k:"ma",label:"Master's",test:function(r){return r.c==="Master's Degree"}},
+  {k:"dr",label:"Doctoral",test:function(r){return /Doctoral|Professional/.test(r.c)}}
+];
+var SERIES=[{k:"ba",label:"Bachelor's",v:"--c-ba"},{k:"ma",label:"Master's",v:"--c-ma"},{k:"dr",label:"Doctoral",v:"--c-dr"}];
+function ck(r){return r.c==="Bachelor's Degree"?"ba":r.c==="Master's Degree"?"ma":"dr"}
+function lvl(r){return r.c.replace(" Degree","")}
+
+var S={cred:"all",area:"",min:0,q:"",sel:null,sortKey:"n",sortDir:-1,pins:[],hide:{},areaSort:"earn"};
+
+var $=function(id){return document.getElementById(id)};
 var usd=function(v){return v==null?"—":"$"+Math.round(v).toLocaleString("en-US")};
-function wmed(items,val,wt){var a=items.filter(function(r){return val(r)!=null}).map(function(r){return[val(r),Math.max(wt(r)||0,1)]}).sort(function(x,y){return x[0]-y[0]});
-  if(!a.length)return null;var t=a.reduce(function(s,x){return s+x[1]},0),c=0;for(var i=0;i<a.length;i++){c+=a[i][1];if(c>=t/2)return a[i][0]}}
+var k=function(v){return v==null?"—":"$"+Math.round(v/1000)+"k"};
+var esc=function(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]})};
 function pct(v,max){return Math.max(0,Math.min(100,v/max*100))}
-function bar(id,mkId,val,max,tick,tickLabel,range){
-  var h='<div class="fill" style="width:'+pct(val,max)+'%"></div>';
-  if(range)h+='<div class="range" style="left:'+pct(range[0],max)+'%;width:'+(pct(range[1],max)-pct(range[0],max))+'%"></div>';
-  if(tick!=null)h+='<div class="tick" style="left:'+pct(tick,max)+'%"></div>';
-  $(id).innerHTML=h;
-  $(mkId).innerHTML=tick==null?"":'<i style="left:'+pct(tick,max)+'%"></i><span style="left:min(max('+pct(tick,max)+'%,60px),calc(100% - 60px))">'+tickLabel+'</span>';}
-function render(){
-  var rows=D.filter(TABS[cur][1]);
-  var w=function(r){return r.n};
-  var both=rows.filter(function(r){return r.e4!=null&&r.nat!=null});
-  var earn=wmed(both,function(r){return r.e4},w),nat=wmed(both,function(r){return r.nat},w);
-  var up=both.filter(function(r){return r.e4>r.nat}).length,upP=both.length?Math.round(up/both.length*100):0;
-  $("above-big").textContent=both.length?upP+"%":"—";
-  $("above-ref").textContent=both.length?up+" of "+both.length+" programs with data earn more than the national median for the same field":"Not enough data for this group";
-  $("tall").innerHTML='<div class="axis"><span>100%</span><span>0%</span></div><div class="col"><div class="fill" style="height:'+upP+'%"></div><div class="tick" style="bottom:50%"></div><div class="lab" style="bottom:50%">Even split</div></div>';
-  $("earn-big").textContent=usd(earn);
-  $("earn-ref").textContent="National median, same fields: "+usd(nat)+" · 4 years after graduating";
-  if(earn!=null)bar("earn-bar","earn-mk",earn,100000,nat,"National median<br>same fields");
-  var dv=rows.map(function(r){return r.debt}).filter(function(v){return v!=null}).sort(function(a,b){return a-b});
-  var debt=wmed(rows,function(r){return r.debt},w);
-  $("debt-big").textContent=usd(debt);
-  if(dv.length){var q=function(p){return dv[Math.floor((dv.length-1)*p)]};
-    $("debt-ref").textContent="Middle half of programs: "+usd(q(.25))+" to "+usd(q(.75))+" ("+dv.length+" programs)";
-    bar("debt-bar","debt-mk",debt,40000,null,"",[q(.25),q(.75)]);
-    $("debt-mk").innerHTML='<span style="left:'+(pct(q(.25),40000)+pct(q(.75),40000))/2+'%;top:4px">Middle half of programs</span>';
-  }else{$("debt-ref").textContent="No debt data for this group";$("debt-bar").innerHTML="";$("debt-mk").innerHTML=""}
-  var g=rows.reduce(function(s,r){return s+(r.n||0)},0);
-  $("m-grads").textContent=g.toLocaleString("en-US");
-  $("m-grads-s").textContent="across "+rows.length+" programs with published outcomes";
-  var pay=wmed(rows,function(r){return r.pay},w);$("m-pay").textContent=pay==null?"—":"$"+pay+"/mo";
-  var t=[["1 yr",wmed(rows,function(r){return r.e1},w)],["4 yr",earn],["5 yr",wmed(rows,function(r){return r.e5},w)]],mx=Math.max.apply(null,t.map(function(x){return x[1]||0}))||1;
-  $("traj").innerHTML=t.map(function(x){return'<div><em>'+usd(x[1])+'</em><b style="height:'+((x[1]||0)/mx*80)+'%"></b>'+x[0]+'</div>'}).join("");
-  var cols=[["p","Program"],["n","Graduates"],["debt","Debt"],["e1","1 yr"],["e4","4 yr vs. national"],["d","Gap"]];
-  $("thead").innerHTML=cols.map(function(c){var s=sortKey===c[0]?(sortDir>0?"ascending":"descending"):"none";return'<th aria-sort="'+s+'"><button class="th-btn" data-k="'+c[0]+'">'+c[1]+(sortKey===c[0]?(sortDir>0?" ▲":" ▼"):"")+'</button></th>'}).join("");
-  var list=rows.filter(function(r){return r.p.toLowerCase().indexOf(query)>-1}).map(function(r){r.d=r.e4!=null&&r.nat!=null?r.e4-r.nat:null;return r});
-  list.sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return(typeof x==="string"?x.localeCompare(y):x-y)*sortDir});
-  $("tbody").innerHTML=list.map(function(r){
-    var cell=r.e4==null?'<span class="na">—</span>':'<div class="cell"><span>'+usd(r.e4)+'</span><div class="mb"><i style="width:'+pct(r.e4,120000)+'%"></i>'+(r.nat!=null?'<u style="left:'+pct(r.nat,120000)+'%"></u>':'')+'</div></div>';
-    var gap=r.d==null?'<span class="na">—</span>':'<span class="pill '+(r.d>=0?"up":"dn")+'">'+(r.d>=0?"+":"−")+usd(Math.abs(r.d))+'</span>';
-    var lvl=r.c.replace(" Degree","").replace("Graduate/Professional Certificate","Grad certificate").replace("Undergraduate Certificate or Diploma","Certificate").replace("First Professional","Professional");
-    return'<tr><td class="prog">'+r.p+'<small>'+lvl+'</small></td><td>'+(r.n==null?'<span class="na">—</span>':r.n.toLocaleString("en-US"))+'</td><td>'+usd(r.debt).replace("$—","—")+'</td><td>'+(r.e1==null?'<span class="na">—</span>':usd(r.e1))+'</td><td>'+cell+'</td><td>'+gap+'</td></tr>'}).join("")||'<tr><td colspan="6" class="na">No programs match.</td></tr>';
-  $("note").textContent="Scorecard hides figures for programs with too few graduates, shown as —. Group figures are medians of program medians, weighted by graduates. Earnings are in dollars at the time, counted for graduates working and not enrolled in school.";
+function wmed(items,val){
+  var a=items.filter(function(r){return val(r)!=null}).map(function(r){return[val(r),Math.max(r.n||0,1)]}).sort(function(x,y){return x[0]-y[0]});
+  if(!a.length)return null;
+  var t=a.reduce(function(s,x){return s+x[1]},0),c=0;
+  for(var i=0;i<a.length;i++){c+=a[i][1];if(c>=t/2)return a[i][0]}
 }
-function tabs(){$("tabs").innerHTML=TABS.map(function(t,i){return'<button class="tab" role="tab" aria-selected="'+(i===cur)+'" data-i="'+i+'">'+t[0]+'</button>'}).join("")}
-$("tabs").onclick=function(e){var b=e.target.closest(".tab");if(b){cur=+b.dataset.i;tabs();render()}};
-$("thead").onclick=function(e){var b=e.target.closest(".th-btn");if(!b)return;var k=b.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=k==="p"?1:-1}render()};
-$("q").oninput=function(e){query=e.target.value.toLowerCase();render()};
-tabs();render();
+function gap(r){return r.e4!=null&&r.nat!=null?r.e4-r.nat:null}
+
+/* ---------- filtering ---------- */
+function credTest(){return CREDS.filter(function(c){return c.k===S.cred})[0].test}
+function baseRows(){var t=credTest();return ROWS.filter(function(r){return t(r)&&(r.n||0)>=S.min})}
+function scoped(){return baseRows().filter(function(r){return !S.area||r.a===S.area})}
+function tableRows(){
+  var q=S.q.trim().toLowerCase();
+  var list=scoped().filter(function(r){return !q||r.p.toLowerCase().indexOf(q)>-1||r.a.toLowerCase().indexOf(q)>-1});
+  list.forEach(function(r){r.d=gap(r)});
+  var key=S.sortKey,dir=S.sortDir;
+  list.sort(function(a,b){var x=a[key],y=b[key];
+    if(x==null&&y==null)return a.p.localeCompare(b.p);if(x==null)return 1;if(y==null)return -1;
+    return(typeof x==="string"?x.localeCompare(y):x-y)*dir||a.p.localeCompare(b.p)});
+  return list;
+}
+
+/* ---------- headline + figures ---------- */
+function renderTop(rows){
+  var cred=CREDS.filter(function(c){return c.k===S.cred})[0];
+  $("kicker").textContent=(S.cred==="all"?"All credentials":cred.label+" programs")+(S.area?" · "+S.area:"")+(S.min?" · "+S.min+"+ graduates":"");
+  var both=rows.filter(function(r){return gap(r)!=null});
+  var earn=wmed(both,function(r){return r.e4}),nat=wmed(both,function(r){return r.nat});
+  var up=both.filter(function(r){return r.e4>r.nat}).length;
+  var share=both.length?Math.round(up/both.length*100):null;
+  if(!both.length){
+    $("headline").textContent="Not enough published earnings data for this slice.";
+    $("dek").textContent="Try a wider filter. The Scorecard withholds figures for small programs.";
+  }else{
+    var lead=both.length===1?(up?"The one program here with earnings data pays":"The one program here with earnings data does not pay"):
+      up===both.length?"All "+both.length+" programs here pay":up===0?"None of the "+both.length+" programs here pay":up+" of the "+both.length+" programs here pay";
+    var diff=earn-nat;
+    $("headline").innerHTML=esc(lead)+" graduates more than the national norm for their field. "+
+      (Math.abs(diff)<1500?"Overall, UTEP grads earn <em>about the national median</em>.":
+       "Overall, UTEP grads earn <em>"+usd(Math.abs(diff))+" "+(diff>0?"more":"less")+"</em> four years out.");
+    var best=both.slice().sort(function(a,b){return gap(b)-gap(a)})[0],worst=both.slice().sort(function(a,b){return gap(a)-gap(b)})[0];
+    $("dek").innerHTML=(gap(best)>=0?"The widest lead belongs to":"The closest to its field is")+" <a href='#' class='linkbtn' data-go='"+best.id+"'>"+esc(best.p)+"</a> ("+lvl(best)+", "+(gap(best)>=0?"+":"−")+usd(Math.abs(gap(best)))+"). "+
+      (gap(worst)<0&&worst!==best?"The largest shortfall is <a href='#' class='linkbtn' data-go='"+worst.id+"'>"+esc(worst.p)+"</a> ("+lvl(worst)+", −"+usd(Math.abs(gap(worst)))+").":"");
+  }
+  $("f-earn").textContent=usd(earn);
+  $("f-earn-p").innerHTML=earn==null?"No data":"National, same fields: "+usd(nat)+(earn!=null?" · <span class='delta "+(earn>=nat?"up":"dn")+"'>"+(earn>=nat?"+":"−")+usd(Math.abs(earn-nat))+"</span>":"");
+  $("f-earn-g").innerHTML=earn==null?"":"<i style='width:"+pct(earn,140000)+"%'></i><u style='left:"+pct(nat,140000)+"%'></u>";
+  $("f-up").textContent=share==null?"—":share+"%";
+  $("f-up-p").textContent=both.length?up+" of "+both.length+" programs with earnings data":"No programs with earnings data";
+  $("f-up-g").innerHTML=share==null?"":"<i style='width:"+share+"%;background:var(--up)'></i><u style='left:50%;background:var(--ink)'></u>";
+  var dv=rows.map(function(r){return r.debt}).filter(function(v){return v!=null}).sort(function(a,b){return a-b});
+  var debt=wmed(rows,function(r){return r.debt}),pay=wmed(rows,function(r){return r.pay});
+  $("f-debt").textContent=usd(debt);
+  if(dv.length){var q=function(p){return dv[Math.floor((dv.length-1)*p)]};
+    $("f-debt-p").innerHTML=(pay!=null?"About $"+pay+" a month<br>":"")+(dv.length<2?"one program reporting":"middle half "+(k(q(.25))===k(q(.75))?k(q(.25)):k(q(.25))+"–"+k(q(.75))));
+    $("f-debt-g").innerHTML="<s style='left:"+pct(q(.25),50000)+"%;width:"+(pct(q(.75),50000)-pct(q(.25),50000))+"%'></s><u style='left:"+pct(debt,50000)+"%;background:var(--ink)'></u>";
+  }else{$("f-debt-p").textContent="No debt data for this slice";$("f-debt-g").innerHTML=""}
+  var g=rows.reduce(function(s,r){return s+(r.n||0)},0);
+  $("f-grads").textContent=g.toLocaleString("en-US");
+  $("f-grads-p").textContent="across "+rows.length+" program"+(rows.length===1?"":"s");
+  $("count").textContent=rows.length+" of "+ROWS.length+" programs";
+}
+
+/* ---------- scatter ---------- */
+var LO=30000,HI=150000;
+function renderPlot(){
+  var host=$("plot"),W=Math.max(300,host.clientWidth),narrow=W<520;
+  var m={t:12,r:12,b:44,l:narrow?40:56},H=Math.round(Math.max(narrow?W*0.95:0,Math.min(W*0.78,560)));
+  var iw=W-m.l-m.r,ih=H-m.t-m.b;
+  var x=function(v){return m.l+(v-LO)/(HI-LO)*iw},y=function(v){return m.t+ih-(v-LO)/(HI-LO)*ih};
+  var inScope={};scoped().forEach(function(r){inScope[r.id]=1});
+  var q=S.q.trim().toLowerCase();
+  var ticks=[40000,60000,80000,100000,120000,140000];
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Scatter plot of UTEP four-year earnings against national median by program">';
+  s+='<path class="zone" d="M'+x(LO)+','+y(LO)+'L'+x(HI)+','+y(HI)+'L'+x(LO)+','+y(HI)+'Z"/>';
+  s+='<g class="grid">'+ticks.map(function(t){return'<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y(t)+'" y2="'+y(t)+'"/><line y1="'+m.t+'" y2="'+(m.t+ih)+'" x1="'+x(t)+'" x2="'+x(t)+'"/>'}).join("")+'</g>';
+  s+=ticks.map(function(t){return'<text x="'+(m.l-8)+'" y="'+(y(t)+4)+'" text-anchor="end">'+k(t)+'</text><text x="'+x(t)+'" y="'+(m.t+ih+18)+'" text-anchor="middle">'+k(t)+'</text>'}).join("");
+  s+='<line class="diag" x1="'+x(LO)+'" y1="'+y(LO)+'" x2="'+x(HI)+'" y2="'+y(HI)+'"/>';
+  s+='<text class="zl" x="'+(m.l+12)+'" y="'+(m.t+20)+'">Earns more than the field</text>';
+  s+='<text class="zl" x="'+(W-m.r-12)+'" y="'+(m.t+ih-12)+'" text-anchor="end">Earns less</text>';
+  s+='<text x="'+(m.l+iw/2)+'" y="'+(H-4)+'" text-anchor="middle">National median for the field →</text>';
+  if(narrow)s+='<text x="'+(m.l+12)+'" y="'+(m.t+38)+'">↑ UTEP median, 4 yrs</text>';
+  if(!narrow)s+='<text transform="translate(12,'+(m.t+ih/2)+') rotate(-90)" text-anchor="middle">UTEP median, 4 years out →</text>';
+  var pts=ROWS.filter(function(r){return gap(r)!=null}).sort(function(a,b){return(b.n||0)-(a.n||0)});
+  // context dots first, in-scope on top, selection last
+  pts.sort(function(a,b){return(inScope[a.id]?1:0)-(inScope[b.id]?1:0)||(a.id===S.sel)-(b.id===S.sel)});
+  var labels=[];
+  s+=pts.map(function(r){
+    var on=inScope[r.id]&&!S.hide[ck(r)],rr=Math.min(14,4+Math.sqrt(r.n||1)*0.55)*(narrow?0.72:1);
+    var dim=on&&q&&r.p.toLowerCase().indexOf(q)<0;
+    var cls="dot"+(on?"":" off")+(dim?" dim":"")+(r.id===S.sel?" sel":"")+(S.pins.indexOf(r.id)>-1?" pin":"");
+    if(r.id===S.sel||(on&&S.pins.indexOf(r.id)>-1))labels.push(r);
+    return'<g class="'+cls+'" data-id="'+r.id+'"><circle class="hit" cx="'+x(r.nat)+'" cy="'+y(r.e4)+'" r="'+(rr+6)+'"/><circle class="v" cx="'+x(r.nat)+'" cy="'+y(r.e4)+'" r="'+rr+'" style="'+(on?'fill:var('+SERIES.filter(function(z){return z.k===ck(r)})[0].v+')':'')+'"/></g>';
+  }).join("");
+  s+=labels.map(function(r){var cx=x(r.nat),right=cx>W*(narrow?0.45:0.62),lim=narrow?22:32,nm=r.p.length>lim?r.p.slice(0,lim-2)+"…":r.p;
+    return'<text class="lbl" x="'+(cx+(right?-14:14))+'" y="'+(y(r.e4)+4)+'" text-anchor="'+(right?"end":"start")+'">'+esc(nm)+'</text>'}).join("");
+  s+='</svg>';
+  var tip=$("tip");host.innerHTML=s;host.appendChild(tip);
+}
+function renderLegend(){
+  var max=0;ROWS.forEach(function(r){if(r.n>max)max=r.n});
+  $("legend").innerHTML=SERIES.map(function(z){return'<button type="button" data-s="'+z.k+'" aria-pressed="'+!S.hide[z.k]+'"><span class="sw" style="background:var('+z.v+')"></span>'+z.label+'</button>'}).join("")+
+    '<span class="sz"><i style="width:9px;height:9px"></i><i style="width:20px;height:20px"></i>Dot size = graduates</span>'+
+    '<span class="sz"><span class="sw" style="background:var(--ghost)"></span>Outside current filter</span>';
+}
+
+/* ---------- profile ---------- */
+function rankOf(r,rows){
+  var withE=rows.filter(function(x){return x.e4!=null}).sort(function(a,b){return b.e4-a.e4});
+  var i=withE.indexOf(r);return i<0?null:[i+1,withE.length];
+}
+function trajSvg(r){
+  var pts=[[1,r.e1],[4,r.e4],[5,r.e5]].filter(function(p){return p[1]!=null});
+  if(!pts.length)return'<p class="na" style="font-size:13px">No earnings published for this program.</p>';
+  var W=360,H=150,m={t:22,r:16,b:26,l:16};
+  var vals=pts.map(function(p){return p[1]}).concat(r.nat!=null?[r.nat]:[]);
+  var lo=Math.min.apply(null,vals)*0.85,hi=Math.max.apply(null,vals)*1.08;
+  var x=function(t){return m.l+(t-1)/4*(W-m.l-m.r)},y=function(v){return m.t+(H-m.t-m.b)*(1-(v-lo)/(hi-lo))};
+  var s='<svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="Earnings 1, 4 and 5 years after graduating">';
+  [1,4,5].forEach(function(t){s+='<text x="'+x(t)+'" y="'+(H-6)+'" text-anchor="middle">'+t+' yr'+(t>1?'s':'')+'</text>'});
+  if(r.nat!=null)s+='<line x1="'+m.l+'" x2="'+(W-m.r)+'" y1="'+y(r.nat)+'" y2="'+y(r.nat)+'" stroke="var(--orange)" stroke-width="2" stroke-dasharray="4 4"/>';
+  var col='var('+SERIES.filter(function(z){return z.k===ck(r)})[0].v+')';
+  if(pts.length>1)s+='<polyline fill="none" stroke="'+col+'" stroke-width="2.5" points="'+pts.map(function(p){return x(p[0])+','+y(p[1])}).join(" ")+'"/>';
+  s+=pts.map(function(p){var tx=x(p[0]),anchor=p[0]===1?"start":p[0]===5?"end":"middle";
+    return'<circle cx="'+tx+'" cy="'+y(p[1])+'" r="5" fill="'+col+'" stroke="var(--paper)" stroke-width="2"/><text class="v" x="'+tx+'" y="'+(y(p[1])+(r.nat!=null&&Math.abs(y(p[1])-y(r.nat))<16&&p[1]<r.nat?18:-10))+'" text-anchor="'+anchor+'">'+k(p[1])+'</text>'}).join("");
+  s+='</svg>';
+  if(r.nat!=null)s+='<p class="tnote"><i></i>National median for the field, 4 years out: '+usd(r.nat)+'</p>';
+  return s;
+}
+function renderProfile(order){
+  var el=$("profile"),r=S.sel==null?null:ROWS[S.sel];
+  if(!r){el.innerHTML='<p class="empty">Pick a program from the chart or table to see its full profile here.</p>';return}
+  var i=order.indexOf(r),g=gap(r),rk=rankOf(r,scoped());
+  var dti=r.debt!=null&&r.e1!=null?Math.round(r.debt/r.e1*100):null;
+  var pinned=S.pins.indexOf(r.id)>-1;
+  el.innerHTML=
+    '<div class="pnav"><button type="button" data-step="-1" aria-label="Previous program"'+(i<=0?" disabled":"")+'>‹</button>'+
+    '<button type="button" data-step="1" aria-label="Next program"'+(i<0||i>=order.length-1?" disabled":"")+'>›</button>'+
+    '<span>'+(i>-1?(i+1)+" of "+order.length+" in table":"Not in current filter")+'</span><span class="sp"></span>'+
+    '<button type="button" data-close aria-label="Close profile">×</button></div>'+
+    '<div class="ptag"><span class="sw" style="background:var('+SERIES.filter(function(z){return z.k===ck(r)})[0].v+')"></span>'+lvl(r)+' · '+r.a+'</div>'+
+    '<h3>'+esc(r.p)+'</h3>'+
+    '<div class="pbig"><span class="n">'+usd(r.e4)+'</span>'+(g!=null?'<span class="delta '+(g>=0?"up":"dn")+'">'+(g>=0?"▲ +":"▼ −")+usd(Math.abs(g))+' vs. national</span>':'')+'</div>'+
+    '<p class="psub">'+(r.e4!=null?"Median pay four years after graduating":"Four-year earnings not published")+(rk?" · ranks "+rk[0]+" of "+rk[1]+" in this view":"")+'</p>'+
+    '<div class="traj">'+trajSvg(r)+'</div>'+
+    '<dl class="facts">'+
+      '<div><dt>Graduates counted</dt><dd>'+(r.n==null?"—":r.n.toLocaleString("en-US"))+'</dd></div>'+
+      '<div><dt>Median federal debt</dt><dd>'+usd(r.debt)+'</dd></div>'+
+      '<div><dt>Monthly payment</dt><dd>'+(r.pay==null?"—":"$"+r.pay+" <small>/mo, 10 yrs</small>")+'</dd></div>'+
+      '<div><dt>Debt vs. first-year pay</dt><dd>'+(dti==null?"—":dti+"% <small>of 1-yr earnings</small>")+'</dd></div>'+
+    '</dl>'+
+    '<div class="pact"><button type="button" class="btn'+(pinned?" ghost":"")+'" data-pin="'+r.id+'"'+(!pinned&&S.pins.length>=3?" disabled title='Compare holds three programs'":"")+'>'+(pinned?"Remove from comparison":"Add to comparison")+'</button></div>';
+}
+
+/* ---------- areas ---------- */
+function renderAreas(){
+  var rows=baseRows();
+  var list=AREAS.map(function(a){
+    var rs=rows.filter(function(r){return r.a===a[0]}),both=rs.filter(function(r){return gap(r)!=null});
+    return{name:a[0],rows:rs,earn:wmed(both,function(r){return r.e4}),nat:wmed(both,function(r){return r.nat}),
+      up:both.filter(function(r){return r.e4>r.nat}).length,cnt:both.length,n:rs.reduce(function(s,r){return s+(r.n||0)},0)};
+  }).filter(function(a){return a.rows.length});
+  list.forEach(function(a){a.share=a.cnt?a.up/a.cnt:null});
+  var key=S.areaSort;
+  list.sort(function(a,b){return(b[key]==null?-1:b[key])-(a[key]==null?-1:a[key])});
+  var MAX=130000;
+  $("areas").innerHTML=list.map(function(a){
+    return'<button type="button" class="arow" data-area="'+esc(a.name)+'" aria-pressed="'+(S.area===a.name)+'">'+
+      '<span><span class="an">'+a.name+'</span></span>'+
+      '<span class="ac">'+a.rows.length+' prog.</span>'+
+      '<span class="ab">'+(a.earn==null?'<em class="na">No earnings data</em>':'<i style="width:'+pct(a.earn,MAX)+'%"></i><u style="left:'+pct(a.nat,MAX)+'%"></u><em style="left:'+Math.max(pct(a.earn,MAX),pct(a.nat,MAX))+'%">'+k(a.earn)+'</em>')+'</span>'+
+      '<span class="aw">'+(a.share==null?'—':'<b style="width:'+Math.round(a.share*40)+'px"></b>'+a.up+'/'+a.cnt+' above')+'</span></button>';
+  }).join("")||'<p class="empty">No programs match these filters.</p>';
+}
+
+/* ---------- compare ---------- */
+function renderCompare(){
+  var sec=$("cmp-sec"),ps=S.pins.map(function(id){return ROWS[id]});
+  sec.hidden=!ps.length;if(!ps.length)return;
+  var metrics=[["Graduates counted","n",1,function(v){return v.toLocaleString("en-US")}],["Pay, 1 year","e1",1,usd],["Pay, 4 years","e4",1,usd],["Pay, 5 years","e5",1,usd],
+    ["Gap vs. national","g",1,function(v){return(v>=0?"+":"−")+usd(Math.abs(v))}],["Federal debt","debt",-1,usd],["Monthly payment","pay",-1,function(v){return"$"+v+"/mo"}]];
+  ps.forEach(function(r){r.g=gap(r)});
+  var h='<table><thead><tr><th></th>'+ps.map(function(r){return'<th scope="col"><button class="x" data-unpin="'+r.id+'" aria-label="Remove '+esc(r.p)+'">×</button>'+esc(r.p)+'<small>'+lvl(r)+'</small></th>'}).join("")+'</tr></thead><tbody>';
+  h+=metrics.map(function(mt){
+    var vs=ps.map(function(r){return r[mt[1]]}).filter(function(v){return v!=null});
+    var best=ps.length>1&&vs.length>1?(mt[2]>0?Math.max.apply(null,vs):Math.min.apply(null,vs)):null;
+    return'<tr><th scope="row">'+mt[0]+'</th>'+ps.map(function(r){var v=r[mt[1]];return'<td class="'+(v!=null&&v===best?"best":"")+'">'+(v==null?'<span class="na">—</span>':mt[3](v))+'</td>'}).join("")+'</tr>';
+  }).join("");
+  $("cmp").innerHTML=h+'</tbody></table>';
+}
+
+/* ---------- table ---------- */
+var COLS=[["p","Program"],["n","Graduates"],["debt","Debt"],["pay","Per month"],["e1","Pay, 1 yr"],["e4","Pay, 4 yrs vs. national"],["d","Gap"]];
+function hl(text){var q=S.q.trim();if(!q)return esc(text);var i=text.toLowerCase().indexOf(q.toLowerCase());
+  return i<0?esc(text):esc(text.slice(0,i))+"<mark>"+esc(text.slice(i,i+q.length))+"</mark>"+esc(text.slice(i+q.length))}
+function renderTable(list){
+  $("thead").innerHTML=COLS.map(function(c){var on=S.sortKey===c[0];
+    return'<th aria-sort="'+(on?(S.sortDir>0?"ascending":"descending"):"none")+'"><button class="sort" data-k="'+c[0]+'">'+c[1]+' <span class="ar">'+(on?(S.sortDir>0?"↑":"↓"):"")+'</span></button></th>'}).join("");
+  var na='<span class="na">—</span>';
+  $("tbody").innerHTML=list.map(function(r){
+    var cell=r.e4==null?na:'<div class="cell"><span>'+usd(r.e4)+'</span><div class="mb"><i style="width:'+pct(r.e4,150000)+'%"></i>'+(r.nat!=null?'<u style="left:'+pct(r.nat,150000)+'%"></u>':'')+'</div></div>';
+    var g=r.d==null?na:'<span class="gap '+(r.d>=0?"up":"dn")+'">'+(r.d>=0?"+":"−")+usd(Math.abs(r.d))+'</span>';
+    var col='var('+SERIES.filter(function(z){return z.k===ck(r)})[0].v+')';
+    return'<tr data-id="'+r.id+'" class="'+(r.id===S.sel?"sel":"")+'" tabindex="0"><td class="prog"><span class="pn">'+hl(r.p)+'</span><small><span class="sw" style="background:'+col+';width:8px;height:8px"></span>'+lvl(r)+' · '+r.a+'</small></td>'+
+      '<td>'+(r.n==null?na:r.n.toLocaleString("en-US"))+'</td><td>'+(r.debt==null?na:usd(r.debt))+'</td><td>'+(r.pay==null?na:"$"+r.pay)+'</td><td>'+(r.e1==null?na:usd(r.e1))+'</td><td>'+cell+'</td><td>'+g+'</td></tr>';
+  }).join("")||'<tr><td colspan="7" class="na" style="text-align:left;padding:20px 10px">No programs match. <button class="linkbtn" data-clearq>Clear the search</button></td></tr>';
+  $("t-aside").textContent=list.length+" shown · click a column to sort";
+}
+
+/* ---------- controls ---------- */
+function renderControls(){
+  $("cred").innerHTML=CREDS.map(function(c){return'<button type="button" data-c="'+c.k+'" aria-pressed="'+(S.cred===c.k)+'">'+c.label+'</button>'}).join("");
+  $("area").innerHTML='<option value="">All areas</option>'+AREAS.map(function(a){return'<option'+(S.area===a[0]?" selected":"")+'>'+a[0]+'</option>'}).join("");
+  $("min").value=S.min;$("minv").textContent=S.min;
+  if($("q").value!==S.q)$("q").value=S.q;
+  document.querySelectorAll("[data-as]").forEach(function(b){b.setAttribute("aria-pressed",b.dataset.as===S.areaSort)});
+}
+
+var order=[];
+function render(){
+  var rows=scoped();
+  order=tableRows();
+  renderControls();renderTop(rows);renderLegend();renderPlot();renderAreas();renderTable(order);renderProfile(order);renderCompare();
+  saveHash();
+}
+
+/* ---------- state in URL ---------- */
+function saveHash(){
+  var p=[];if(S.cred!=="all")p.push("c="+S.cred);if(S.area)p.push("a="+encodeURIComponent(S.area));if(S.min)p.push("m="+S.min);
+  if(S.q)p.push("q="+encodeURIComponent(S.q));if(S.sel!=null)p.push("p="+S.sel);if(S.pins.length)p.push("cmp="+S.pins.join("."));
+  var h=p.length?"#"+p.join("&"):"";
+  if(location.hash!==h)try{history.replaceState(null,"",h||location.pathname+location.search)}catch(e){}
+}
+function loadHash(){
+  location.hash.slice(1).split("&").forEach(function(kv){var i=kv.indexOf("="),key=kv.slice(0,i),v=decodeURIComponent(kv.slice(i+1));
+    if(key==="c"&&CREDS.some(function(c){return c.k===v}))S.cred=v;
+    if(key==="a"&&AREAS.some(function(a){return a[0]===v}))S.area=v;
+    if(key==="m")S.min=Math.max(0,Math.min(150,+v||0));
+    if(key==="q")S.q=v;
+    if(key==="p"&&ROWS[+v])S.sel=+v;
+    if(key==="cmp")S.pins=v.split(".").map(Number).filter(function(n){return ROWS[n]}).slice(0,3);
+  });
+}
+
+function select(id,scroll){
+  S.sel=id;render();
+  if(scroll&&window.innerWidth<=980)$("profile").scrollIntoView({behavior:"smooth",block:"start"});
+}
+function togglePin(id){var i=S.pins.indexOf(id);if(i>-1)S.pins.splice(i,1);else if(S.pins.length<3)S.pins.push(id);render()}
+
+$("cred").onclick=function(e){var b=e.target.closest("[data-c]");if(b){S.cred=b.dataset.c;render()}};
+$("area").onchange=function(e){S.area=e.target.value;render()};
+$("min").oninput=function(e){S.min=+e.target.value;render()};
+$("q").oninput=function(e){S.q=e.target.value;render()};
+$("reset").onclick=function(){S.cred="all";S.area="";S.min=0;S.q="";S.hide={};render()};
+$("legend").onclick=function(e){var b=e.target.closest("[data-s]");if(b){S.hide[b.dataset.s]=!S.hide[b.dataset.s];render()}};
+$("areas").onclick=function(e){var b=e.target.closest("[data-area]");if(b){S.area=S.area===b.dataset.area?"":b.dataset.area;render()}};
+document.querySelectorAll("[data-as]").forEach(function(b){b.onclick=function(){S.areaSort=b.dataset.as;renderControls();renderAreas()}});
+$("thead").onclick=function(e){var b=e.target.closest(".sort");if(!b)return;var key=b.dataset.k;
+  if(S.sortKey===key)S.sortDir*=-1;else{S.sortKey=key;S.sortDir=key==="p"?1:-1}render()};
+$("tbody").onclick=function(e){if(e.target.closest("[data-clearq]")){S.q="";render();return}var tr=e.target.closest("tr[data-id]");if(tr)select(+tr.dataset.id,true)};
+$("tbody").onkeydown=function(e){var tr=e.target.closest("tr[data-id]");if(tr&&(e.key==="Enter"||e.key===" ")){e.preventDefault();select(+tr.dataset.id,true)}};
+$("dek").onclick=function(e){var a=e.target.closest("[data-go]");if(a){e.preventDefault();select(+a.dataset.go,true)}};
+$("profile").onclick=function(e){
+  var b=e.target.closest("button");if(!b)return;
+  if(b.dataset.step){var i=order.indexOf(ROWS[S.sel]),n=order[i+(+b.dataset.step)];if(n)select(n.id)}
+  else if(b.hasAttribute("data-close")){S.sel=null;render()}
+  else if(b.dataset.pin){togglePin(+b.dataset.pin)}
+};
+$("cmp").onclick=function(e){var b=e.target.closest("[data-unpin]");if(b)togglePin(+b.dataset.unpin)};
+$("cmp-clear").onclick=function(){S.pins=[];render()};
+$("csv").onclick=function(){
+  var head=["Program","Credential","Area","Graduates","Median debt","Monthly payment","Earnings 1 yr","Earnings 4 yrs","Earnings 5 yrs","National median","Gap"];
+  var q=function(v){return v==null?"":/[",\n]/.test(v)?'"'+String(v).replace(/"/g,'""')+'"':v};
+  var lines=[head.join(",")].concat(order.map(function(r){return[r.p,r.c,r.a,r.n,r.debt,r.pay,r.e1,r.e4,r.e5,r.nat,gap(r)].map(q).join(",")}));
+  var a=document.createElement("a");a.href=URL.createObjectURL(new Blob([lines.join("\n")],{type:"text/csv"}));a.download="utep-program-outcomes.csv";
+  document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove()},0);
+};
+
+/* scatter hover + click */
+var plot=$("plot");
+plot.addEventListener("mousemove",function(e){
+  var g=e.target.closest&&e.target.closest(".dot"),tip=$("tip");
+  if(!g){tip.classList.remove("on");return}
+  var r=ROWS[+g.dataset.id],d=gap(r),box=plot.getBoundingClientRect();
+  tip.innerHTML='<b>'+esc(r.p)+'</b>'+lvl(r)+' · '+(r.n||"—")+' grads<br>UTEP '+usd(r.e4)+' <span>vs.</span> '+usd(r.nat)+' national<br>'+(d>=0?"+":"−")+usd(Math.abs(d))+(d>=0?" ahead":" behind");
+  tip.classList.add("on");
+  var tx=e.clientX-box.left+14,ty=e.clientY-box.top+14;
+  if(tx+260>box.width)tx=e.clientX-box.left-tip.offsetWidth-14;
+  if(ty+tip.offsetHeight>box.height)ty=e.clientY-box.top-tip.offsetHeight-14;
+  tip.style.left=Math.max(0,tx)+"px";tip.style.top=Math.max(0,ty)+"px";
+});
+plot.addEventListener("mouseleave",function(){$("tip").classList.remove("on")});
+plot.addEventListener("click",function(e){var g=e.target.closest(".dot");if(g)select(+g.dataset.id,true)});
+
+/* keyboard */
+document.addEventListener("keydown",function(e){
+  var t=e.target,typing=/INPUT|SELECT|TEXTAREA/.test(t.tagName);
+  if(e.key==="/"&&!typing){e.preventDefault();$("q").focus();return}
+  if(e.key==="Escape"&&t.id==="q"){S.q="";render();t.blur();return}
+  if(typing||e.metaKey||e.ctrlKey||e.altKey)return;
+  if(e.key==="ArrowRight"||e.key==="ArrowLeft"){
+    if(!order.length)return;var i=order.indexOf(ROWS[S.sel]);
+    var n=e.key==="ArrowRight"?order[Math.min(order.length-1,i+1)]:order[Math.max(0,i<0?0:i-1)];
+    if(n){e.preventDefault();select(n.id)}
+  }
+});
+
+/* theme */
+function applyTheme(t){
+  if(t)document.documentElement.setAttribute("data-theme",t);else document.documentElement.removeAttribute("data-theme");
+  var dark=t?t==="dark":window.matchMedia("(prefers-color-scheme: dark)").matches;
+  $("theme").textContent=dark?"Light":"Dark";$("theme").setAttribute("aria-label","Switch to "+(dark?"light":"dark")+" theme");
+}
+var theme=null;try{theme=localStorage.getItem("utep-theme")}catch(e){}
+applyTheme(theme);
+$("theme").onclick=function(){var dark=$("theme").textContent==="Light";theme=dark?"light":"dark";try{localStorage.setItem("utep-theme",theme)}catch(e){}applyTheme(theme)};
+
+var rt;window.addEventListener("resize",function(){clearTimeout(rt);rt=setTimeout(renderPlot,120)});
+window.addEventListener("hashchange",function(){loadHash();render()});
+
+loadHash();
+if(S.sel==null){var biggest=ROWS.filter(function(r){return r.n!=null&&gap(r)!=null}).sort(function(a,b){return b.n-a.n})[0];S.sel=biggest?biggest.id:null}
+render();
 </script>
+</body>
+</html>
