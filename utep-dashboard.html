@@ -1,0 +1,184 @@
+<title>UTEP Outcomes Dashboard</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;700;800&family=Public+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: navy masthead, credential tabs, one tall-bar card left, stacked metric cards right, sortable program table below */
+:root{
+  --bg:#f4f5f8; --surface:#ffffff; --fg:#0b1a33; --muted:#5a6479; --line:#dde1ea;
+  --blue:#041e42; --orange:#ff8200; --orange-ink:#b85c00; --track:#e6e9f1; --good:#12805c; --warn:#b3261e;
+  --head:'Archivo',system-ui,sans-serif; --body:'Public Sans',system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0a1220; --surface:#111c31; --fg:#eef1f7; --muted:#9aa5bb; --line:#24324d;
+  --blue:#7fa6e6; --orange:#ff9a2e; --orange-ink:#ffb25e; --track:#1f2d47; --good:#4cc79b; --warn:#ff8a80; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0a1220; --surface:#111c31; --fg:#eef1f7; --muted:#9aa5bb; --line:#24324d;
+  --blue:#7fa6e6; --orange:#ff9a2e; --orange-ink:#ffb25e; --track:#1f2d47; --good:#4cc79b; --warn:#ff8a80; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:15px;line-height:1.45}
+*{box-sizing:border-box}
+.mast{background:#041e42;color:#fff;padding:18px 16px;border-bottom:4px solid #ff8200}
+.mast-in,.wrap{max-width:1180px;margin:0 auto}
+.mast h1{font:800 22px/1.15 var(--head);margin:0;letter-spacing:.01em}
+.mast p{margin:4px 0 0;color:#c4cee0;font-size:13px}
+.wrap{padding:20px 16px 48px;display:flex;flex-direction:column;gap:20px}
+.tabs{display:flex;flex-wrap:wrap;border-bottom:1px solid var(--line)}
+.tab{font:600 14px var(--body);background:none;border:0;border-bottom:4px solid transparent;color:var(--muted);padding:12px 20px;cursor:pointer;margin-bottom:-1px}
+.tab[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--orange);font-weight:700}
+.tab:focus-visible,.th-btn:focus-visible,input:focus-visible{outline:3px solid var(--orange);outline-offset:2px}
+.grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:20px}
+.stack{display:flex;flex-direction:column;gap:20px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:20px 22px;min-width:0}
+.card h2{font:700 21px var(--head);margin:0 0 6px}
+.big{font:800 34px/1.1 var(--head);color:var(--blue);font-variant-numeric:tabular-nums}
+.ref{font-style:italic;color:var(--muted);margin:6px 0 14px}
+.ends{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.bar{position:relative;height:34px;background:var(--track);margin:3px 0 0}
+.bar .fill{position:absolute;inset:0 auto 0 0;background:var(--blue)}
+.bar .tick{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--fg)}
+.bar .range{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--orange) 45%,transparent)}
+.mk{position:relative;height:38px}
+.mk span{position:absolute;transform:translateX(-50%);text-align:center;font-size:12px;font-style:italic;color:var(--muted);top:6px;line-height:1.2;width:120px}
+.mk i{position:absolute;top:-1px;transform:translateX(-50%);border:6px solid transparent;border-bottom:8px solid var(--fg);border-top:0}
+.tall{display:flex;gap:14px;align-items:stretch;height:300px;margin-top:10px}
+.tall .axis{display:flex;flex-direction:column;justify-content:space-between;font-size:12px;color:var(--muted);text-align:right}
+.tall .col{position:relative;width:110px;background:var(--track)}
+.tall .col .fill{position:absolute;left:0;right:0;bottom:0;background:var(--blue)}
+.tall .col .tick{position:absolute;left:0;right:-8px;height:2px;background:var(--fg)}
+.tall .lab{position:absolute;left:122px;transform:translateY(50%);font-size:12px;font-style:italic;color:var(--muted);width:90px;line-height:1.2}
+.mini{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px}
+.mini .card{padding:16px 18px}
+.mini h3{font:600 13px var(--body);color:var(--muted);margin:0 0 4px}
+.mini .big{font-size:26px}
+.mini small{display:block;color:var(--muted);font-size:12px;margin-top:2px}
+.traj{display:flex;align-items:flex-end;gap:18px;height:130px;margin-top:10px}
+.traj div{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:4px;height:100%;font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.traj b{display:block;width:100%;background:var(--blue)}
+.traj div:last-child b{background:var(--orange)}
+.traj em{font-style:normal;color:var(--fg);font-weight:600}
+.tools{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:12px}
+.tools h2{margin:0}
+input[type=search]{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:9px 12px;width:min(100%,280px)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:720px;font-variant-numeric:tabular-nums}
+th,td{text-align:right;padding:10px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+th:first-child,td:first-child{text-align:left}
+th{font:600 12px var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.th-btn{all:unset;cursor:pointer;color:var(--muted)}
+.th-btn:hover{color:var(--fg)}
+td.prog{font-weight:500;min-width:220px}
+td.prog small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.cell{display:flex;align-items:center;gap:10px;justify-content:flex-end}
+.mb{position:relative;width:90px;height:10px;background:var(--track);flex:none}
+.mb i{position:absolute;inset:0 auto 0 0;background:var(--blue)}
+.mb u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--orange)}
+.pill{font:600 12px var(--body);padding:2px 8px;border-radius:99px;white-space:nowrap}
+.pill.up{color:var(--good);background:color-mix(in srgb,var(--good) 14%,transparent)}
+.pill.dn{color:var(--warn);background:color-mix(in srgb,var(--warn) 14%,transparent)}
+.na{color:var(--muted)}
+.key{display:flex;flex-wrap:wrap;gap:16px;font-size:12px;color:var(--muted);margin-top:12px}
+.key span::before{content:"";display:inline-block;width:12px;height:10px;margin-right:6px;vertical-align:-1px;background:var(--blue)}
+.key span.o::before{width:2px;height:14px;background:var(--orange);vertical-align:-3px}
+.note{color:var(--muted);font-size:12px;max-width:80ch}
+@media (max-width:860px){.grid{grid-template-columns:1fr}.mini{grid-template-columns:1fr 1fr}}
+@media (max-width:480px){.mini{grid-template-columns:1fr}.tab{padding:10px 12px}.big{font-size:30px}.tall .lab{width:70px}}
+</style>
+<header class="mast"><div class="mast-in">
+  <h1>The University of Texas at El Paso</h1>
+  <p>Graduate outcomes by program · U.S. Department of Education College Scorecard field-of-study data</p>
+</div></header>
+<main class="wrap">
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div class="grid">
+    <section class="card" aria-labelledby="h-above">
+      <h2 id="h-above">Programs above national pay</h2>
+      <div class="big" id="above-big"></div>
+      <p class="ref" id="above-ref"></p>
+      <div class="tall" id="tall"></div>
+    </section>
+    <div class="stack">
+      <section class="card">
+        <h2>Median Earnings</h2>
+        <div class="big" id="earn-big"></div>
+        <p class="ref" id="earn-ref"></p>
+        <div class="ends"><span>$0</span><span>$100,000+</span></div>
+        <div class="bar" id="earn-bar"></div><div class="mk" id="earn-mk"></div>
+      </section>
+      <section class="card">
+        <h2>Median Federal Debt</h2>
+        <div class="big" id="debt-big"></div>
+        <p class="ref" id="debt-ref"></p>
+        <div class="ends"><span>$0</span><span>$40,000</span></div>
+        <div class="bar" id="debt-bar"></div><div class="mk" id="debt-mk"></div>
+      </section>
+    </div>
+  </div>
+  <div class="mini">
+    <section class="card"><h3>Graduates counted</h3><div class="big" id="m-grads"></div><small id="m-grads-s"></small></section>
+    <section class="card"><h3>Typical monthly payment</h3><div class="big" id="m-pay"></div><small>10-year standard federal plan</small></section>
+    <section class="card"><h3>Earnings over time</h3><div class="traj" id="traj"></div></section>
+  </div>
+  <section class="card">
+    <div class="tools"><h2 id="h-table">All programs</h2>
+      <input type="search" id="q" placeholder="Search programs" aria-label="Search programs"></div>
+    <div class="tw"><table aria-labelledby="h-table"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table></div>
+    <div class="key"><span>UTEP median earnings, 4 years after</span><span class="o">National median, same field</span></div>
+    <p class="note" id="note"></p>
+  </section>
+</main>
+<script>
+var D=[["Natural Resources Conservation and Research","Bachelor's Degree",14,null,null,31207,null,null,55012],["Communication and Media Studies","Bachelor's Degree",22,null,null,23766,58451,null,56359],["Radio, Television, and Digital Communication","Bachelor's Degree",68,20750,220,21182,36373,41552,50497],["Public Relations, Advertising, and Applied Communication","Bachelor's Degree",85,20200,214,33280,49558,45106,63560],["Computer and Information Sciences, General","Bachelor's Degree",165,19869,211,73311,103286,101825,92374],["Curriculum and Instruction","Master's Degree",72,38965,443,59146,62807,61028,63399],["Educational Administration and Supervision","Master's Degree",41,32424,369,58148,67557,67045,71685],["Special Education and Teaching","Master's Degree",18,null,null,65786,null,58824,64397],["Student Counseling and Personnel Services","Master's Degree",14,null,null,null,60800,59803,60111],["Teacher Education and Professional Development, Specific Subject Areas","Master's Degree",4,null,null,62035,null,57848,63707],["Civil Engineering","Bachelor's Degree",73,16341,173,60287,75882,76943,86517],["Computer Engineering","Master's Degree",36,26718,304,102946,121882,null,136736],["Electrical, Electronics, and Communications Engineering","Bachelor's Degree",66,17823,189,74285,94122,99630,100647],["Mechanical Engineering","Bachelor's Degree",199,16378,174,62393,88393,91486,92135],["Mechanical Engineering","Master's Degree",44,null,null,93773,107441,96545,115974],["Metallurgical Engineering","Bachelor's Degree",22,20490,217,53478,89131,73613,92722],["Systems Engineering","Master's Degree",52,null,null,93203,113173,77904,144565],["Industrial Engineering","Bachelor's Degree",61,16104,171,45467,82391,80955,98442],["Linguistic, Comparative, and Related Language Studies and Services","Bachelor's Degree",20,16502,175,26475,39907,24899,49984],["Romance Languages, Literatures, and Linguistics","Bachelor's Degree",13,23778,252,30291,47152,53955,55000],["English Language and Literature, General","Bachelor's Degree",61,21750,231,29550,45184,47373,48590],["Rhetoric and Composition/Writing Studies","Master's Degree",33,37705,429,63112,59922,56065,55035],["Biology, General","Bachelor's Degree",297,17895,190,22167,49396,51785,57214],["Biochemistry, Biophysics and Molecular Biology","Bachelor's Degree",39,16877,179,19546,51356,59236,65466],["Microbiological Sciences and Immunology","Bachelor's Degree",28,18938,201,22069,53992,63674,62582],["Mathematics","Bachelor's Degree",39,18125,192,42424,57392,57385,69562],["Multi/Interdisciplinary Studies, Other","Bachelor's Degree",2,20850,221,49351,56486,54209,55693],["Multi/Interdisciplinary Studies, Other","Master's Degree",42,null,null,60687,77302,73616,75122],["Sports, Kinesiology, and Physical Education/Fitness","Bachelor's Degree",170,19875,211,23010,51063,57958,54562],["Geological and Earth Sciences/Geosciences","Bachelor's Degree",12,null,null,null,52098,null,60190],["Geological and Earth Sciences/Geosciences","Master's Degree",5,null,null,null,99705,null,79463],["Psychology, General","Bachelor's Degree",282,17875,190,27627,42190,43930,50706],["Criminal Justice and Corrections","Bachelor's Degree",283,18750,199,33304,47681,49048,55378],["Security Science and Technology","Bachelor's Degree",28,24060,255,23495,42459,63300,57805],["Public Administration","Master's Degree",14,null,null,null,72517,68589,81408],["Social Work","Bachelor's Degree",39,16236,172,37865,53995,48913,51790],["Social Work","Master's Degree",36,null,null,null,62434,63976,65123],["Anthropology","Bachelor's Degree",8,null,null,null,null,23099,46676],["International Relations and National Security Studies","Master's Degree",32,null,null,79569,null,null,95627],["Political Science and Government","Bachelor's Degree",67,20663,219,26182,54069,45528,63293],["Sociology","Bachelor's Degree",18,22328,237,29066,35325,47880,52657],["Fine and Studio Arts","Bachelor's Degree",64,18500,196,19506,36854,34170,41367],["Music","Bachelor's Degree",29,14894,158,56062,60172,null,42892],["Arts, Entertainment, and Media Management","Bachelor's Degree",18,24000,254,16023,null,33062,48240],["Communication Disorders Sciences and Services","Master's Degree",25,null,null,null,75776,78910,67030],["Clinical/Medical Laboratory Science/Research and Allied Professions","Bachelor's Degree",24,21000,223,54659,66491,60471,75975],["Mental and Social Health Services and Allied Professions","Master's Degree",37,48143,548,49428,57668,null,59571],["Public Health","Bachelor's Degree",32,23000,244,31844,44665,39473,58808],["Rehabilitation and Therapeutic Professions","Bachelor's Degree",98,null,null,28195,null,null,55792],["Rehabilitation and Therapeutic Professions","Master's Degree",23,33701,383,59225,69580,65412,71416],["Rehabilitation and Therapeutic Professions","Doctoral Degree",null,44877,510,76331,87651,86370,82893],["Health Professions Education, Ethics, and Humanities","Master's Degree",24,38201,435,95799,98664,89521,100487],["Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing","Bachelor's Degree",376,18700,198,72429,89077,84537,88910],["Registered Nursing, Nursing Administration, Nursing Research and Clinical Nursing","Master's Degree",100,41000,466,104997,121262,128408,120193],["Business/Commerce, General","Bachelor's Degree",16,null,null,null,48065,51833,68407],["Business Administration, Management and Operations","Bachelor's Degree",142,16656,177,37140,51506,46950,68257],["Business Administration, Management and Operations","Master's Degree",97,31722,361,66350,82356,88771,103485],["Accounting and Related Services","Bachelor's Degree",156,17500,186,37562,57389,57556,76194],["Accounting and Related Services","Master's Degree",51,16634,189,61218,81639,78356,95833],["Business/Managerial Economics","Bachelor's Degree",20,null,null,null,null,57581,77981],["Finance and Financial Management Services","Bachelor's Degree",122,15898,169,40994,59668,52663,83343],["International Business","Bachelor's Degree",18,null,null,15202,null,null,73201],["Management Information Systems and Services","Bachelor's Degree",13,18951,201,41014,62136,55242,83290],["Marketing","Bachelor's Degree",97,15000,159,31236,49068,52324,69303],["Construction Management","Master's Degree",60,22543,256,70155,100391,null,112166],["History","Bachelor's Degree",33,22500,239,30230,50510,46573,50680]].map(function(r){return{p:r[0],c:r[1],n:r[2],debt:r[3],pay:r[4],e1:r[5],e4:r[6],e5:r[7],nat:r[8]}});
+var TABS=[["All programs",function(){return true}],["Bachelor's",function(r){return r.c==="Bachelor's Degree"}],["Master's",function(r){return r.c==="Master's Degree"}],["Doctoral & Professional",function(r){return /Doctoral|Professional Degree/.test(r.c)}]];
+var cur=0,sortKey="n",sortDir=-1,query="";
+var $=function(i){return document.getElementById(i)};
+var usd=function(v){return v==null?"—":"$"+Math.round(v).toLocaleString("en-US")};
+function wmed(items,val,wt){var a=items.filter(function(r){return val(r)!=null}).map(function(r){return[val(r),Math.max(wt(r)||0,1)]}).sort(function(x,y){return x[0]-y[0]});
+  if(!a.length)return null;var t=a.reduce(function(s,x){return s+x[1]},0),c=0;for(var i=0;i<a.length;i++){c+=a[i][1];if(c>=t/2)return a[i][0]}}
+function pct(v,max){return Math.max(0,Math.min(100,v/max*100))}
+function bar(id,mkId,val,max,tick,tickLabel,range){
+  var h='<div class="fill" style="width:'+pct(val,max)+'%"></div>';
+  if(range)h+='<div class="range" style="left:'+pct(range[0],max)+'%;width:'+(pct(range[1],max)-pct(range[0],max))+'%"></div>';
+  if(tick!=null)h+='<div class="tick" style="left:'+pct(tick,max)+'%"></div>';
+  $(id).innerHTML=h;
+  $(mkId).innerHTML=tick==null?"":'<i style="left:'+pct(tick,max)+'%"></i><span style="left:min(max('+pct(tick,max)+'%,60px),calc(100% - 60px))">'+tickLabel+'</span>';}
+function render(){
+  var rows=D.filter(TABS[cur][1]);
+  var w=function(r){return r.n};
+  var both=rows.filter(function(r){return r.e4!=null&&r.nat!=null});
+  var earn=wmed(both,function(r){return r.e4},w),nat=wmed(both,function(r){return r.nat},w);
+  var up=both.filter(function(r){return r.e4>r.nat}).length,upP=both.length?Math.round(up/both.length*100):0;
+  $("above-big").textContent=both.length?upP+"%":"—";
+  $("above-ref").textContent=both.length?up+" of "+both.length+" programs with data earn more than the national median for the same field":"Not enough data for this group";
+  $("tall").innerHTML='<div class="axis"><span>100%</span><span>0%</span></div><div class="col"><div class="fill" style="height:'+upP+'%"></div><div class="tick" style="bottom:50%"></div><div class="lab" style="bottom:50%">Even split</div></div>';
+  $("earn-big").textContent=usd(earn);
+  $("earn-ref").textContent="National median, same fields: "+usd(nat)+" · 4 years after graduating";
+  if(earn!=null)bar("earn-bar","earn-mk",earn,100000,nat,"National median<br>same fields");
+  var dv=rows.map(function(r){return r.debt}).filter(function(v){return v!=null}).sort(function(a,b){return a-b});
+  var debt=wmed(rows,function(r){return r.debt},w);
+  $("debt-big").textContent=usd(debt);
+  if(dv.length){var q=function(p){return dv[Math.floor((dv.length-1)*p)]};
+    $("debt-ref").textContent="Middle half of programs: "+usd(q(.25))+" to "+usd(q(.75))+" ("+dv.length+" programs)";
+    bar("debt-bar","debt-mk",debt,40000,null,"",[q(.25),q(.75)]);
+    $("debt-mk").innerHTML='<span style="left:'+(pct(q(.25),40000)+pct(q(.75),40000))/2+'%;top:4px">Middle half of programs</span>';
+  }else{$("debt-ref").textContent="No debt data for this group";$("debt-bar").innerHTML="";$("debt-mk").innerHTML=""}
+  var g=rows.reduce(function(s,r){return s+(r.n||0)},0);
+  $("m-grads").textContent=g.toLocaleString("en-US");
+  $("m-grads-s").textContent="across "+rows.length+" programs with published outcomes";
+  var pay=wmed(rows,function(r){return r.pay},w);$("m-pay").textContent=pay==null?"—":"$"+pay+"/mo";
+  var t=[["1 yr",wmed(rows,function(r){return r.e1},w)],["4 yr",earn],["5 yr",wmed(rows,function(r){return r.e5},w)]],mx=Math.max.apply(null,t.map(function(x){return x[1]||0}))||1;
+  $("traj").innerHTML=t.map(function(x){return'<div><em>'+usd(x[1])+'</em><b style="height:'+((x[1]||0)/mx*80)+'%"></b>'+x[0]+'</div>'}).join("");
+  var cols=[["p","Program"],["n","Graduates"],["debt","Debt"],["e1","1 yr"],["e4","4 yr vs. national"],["d","Gap"]];
+  $("thead").innerHTML=cols.map(function(c){var s=sortKey===c[0]?(sortDir>0?"ascending":"descending"):"none";return'<th aria-sort="'+s+'"><button class="th-btn" data-k="'+c[0]+'">'+c[1]+(sortKey===c[0]?(sortDir>0?" ▲":" ▼"):"")+'</button></th>'}).join("");
+  var list=rows.filter(function(r){return r.p.toLowerCase().indexOf(query)>-1}).map(function(r){r.d=r.e4!=null&&r.nat!=null?r.e4-r.nat:null;return r});
+  list.sort(function(a,b){var x=a[sortKey],y=b[sortKey];if(x==null&&y==null)return 0;if(x==null)return 1;if(y==null)return -1;return(typeof x==="string"?x.localeCompare(y):x-y)*sortDir});
+  $("tbody").innerHTML=list.map(function(r){
+    var cell=r.e4==null?'<span class="na">—</span>':'<div class="cell"><span>'+usd(r.e4)+'</span><div class="mb"><i style="width:'+pct(r.e4,120000)+'%"></i>'+(r.nat!=null?'<u style="left:'+pct(r.nat,120000)+'%"></u>':'')+'</div></div>';
+    var gap=r.d==null?'<span class="na">—</span>':'<span class="pill '+(r.d>=0?"up":"dn")+'">'+(r.d>=0?"+":"−")+usd(Math.abs(r.d))+'</span>';
+    var lvl=r.c.replace(" Degree","").replace("Graduate/Professional Certificate","Grad certificate").replace("Undergraduate Certificate or Diploma","Certificate").replace("First Professional","Professional");
+    return'<tr><td class="prog">'+r.p+'<small>'+lvl+'</small></td><td>'+(r.n==null?'<span class="na">—</span>':r.n.toLocaleString("en-US"))+'</td><td>'+usd(r.debt).replace("$—","—")+'</td><td>'+(r.e1==null?'<span class="na">—</span>':usd(r.e1))+'</td><td>'+cell+'</td><td>'+gap+'</td></tr>'}).join("")||'<tr><td colspan="6" class="na">No programs match.</td></tr>';
+  $("note").textContent="Scorecard hides figures for programs with too few graduates, shown as —. Group figures are medians of program medians, weighted by graduates. Earnings are in dollars at the time, counted for graduates working and not enrolled in school.";
+}
+function tabs(){$("tabs").innerHTML=TABS.map(function(t,i){return'<button class="tab" role="tab" aria-selected="'+(i===cur)+'" data-i="'+i+'">'+t[0]+'</button>'}).join("")}
+$("tabs").onclick=function(e){var b=e.target.closest(".tab");if(b){cur=+b.dataset.i;tabs();render()}};
+$("thead").onclick=function(e){var b=e.target.closest(".th-btn");if(!b)return;var k=b.dataset.k;if(sortKey===k)sortDir*=-1;else{sortKey=k;sortDir=k==="p"?1:-1}render()};
+$("q").oninput=function(e){query=e.target.value.toLowerCase();render()};
+tabs();render();
+</script>
